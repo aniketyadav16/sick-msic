@@ -1,0 +1,186 @@
+:root {
+  --bg-dark: #09090b;
+}
+
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #ffffff;
+}
+
+.music-app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.music-app__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.music-app__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(9, 9, 11, 0.88) 100%);
+}
+
+.music-app__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 390px 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+.music-app__wheel-panel {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 16, 22, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.music-app__panel-brand {
+  position: absolute;
+  top: 1.5rem;
+  left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+  transition: background-color 0.4s ease;
+}
+
+.music-app__display-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.track-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 800px;
+  gap: 1.25rem;
+  padding: 1rem;
+}
+
+.track-details__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.track-details__meta h2 {
+  font-size: clamp(1.8rem, 3.5vw, 2.75rem);
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #ffffff;
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.8);
+}
+
+.track-details__meta p {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+}
+
+/* ─── Clean Mode ──────────────────────────────────────────────── */
+/* Toggle with Cmd+R / Ctrl+R – hides all UI, leaves only image  */
+
+.music-app--clean .music-app__wheel-panel,
+.music-app--clean .music-app__panel-brand,
+.music-app--clean .track-details__meta,
+.music-app--clean .wavy-playbar,
+.music-app--clean .scroll-expand__title,
+.music-app--clean .scroll-expand__hint,
+.music-app--clean .scroll-expand__overlay,
+.music-app--clean .scroll-expand__scrim,
+.music-app--clean .music-app__vignette {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Make the image fill the full width when the wheel panel hides */
+.music-app--clean .music-app__content {
+  grid-template-columns: 0px 1fr;
+  transition: grid-template-columns 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Expand media frame to full bleed in clean mode */
+.music-app--clean .scroll-expand__frame {
+  clip-path: inset(0% 0% 0% 0% round 0px) !important;
+  transition: clip-path 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Restore smooth grid on exit */
+.music-app__content {
+  transition: grid-template-columns 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hint toast shown briefly when entering Clean Mode */
+.music-app--clean::after {
+  content: 'Clean Mode  ·  ⌘R to exit';
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: cleanModeHint 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes cleanModeHint {
+  0%   { opacity: 0; transform: translateY(8px); }
+  12%  { opacity: 1; transform: translateY(0); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
