@@ -6,7 +6,7 @@ import WavyPlaybar from './WavyPlaybar';
 import './MusicApp.css';
 
 // Replace with your public R2 URL (r2.dev or custom subdomain)
-const BASE_R2_URL = 'https://pub-xxxxxxxxxxxxxxxx.r2.dev';
+const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
 
 const COSMOS_THEMES = [
   { image: `${BASE_R2_URL}/images/earth-orbit.jpg`, colors: ['#00d2ff', '#1e40af', '#090d16'] },
