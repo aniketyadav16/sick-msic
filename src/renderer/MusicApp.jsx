@@ -5,7 +5,7 @@ import ScrollExpand from './ScrollExpand';
 import WavyPlaybar from './WavyPlaybar';
 import './MusicApp.css';
 
-// Replace with your public R2 URL (e.g., https://pub-xxx.r2.dev or https://media.yourdomain.com)
+// Public Cloudflare R2 URL
 const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
 
 const COSMOS_THEMES = [
@@ -47,7 +47,7 @@ const RAW_TRACK_LIST = [
   { title: "Until I Found You", artist: "Stephen Sanchez", genre: "Retro Pop", file: "Stephen Sanchez - Until I Found You (Official Video) [GxldQ9eX2wo].mp3" }
 ];
 
-// Encodes filenames cleanly while targeting the /music/ subfolder in R2
+// Target /music/ folder in Cloudflare R2 and encode filenames
 const TRACKS = RAW_TRACK_LIST.map((item, idx) => {
   const theme = COSMOS_THEMES[idx % COSMOS_THEMES.length];
   return {
@@ -61,6 +61,21 @@ const TRACKS = RAW_TRACK_LIST.map((item, idx) => {
   };
 });
 
+// Custom hook to detect mobile viewport width dynamically
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+};
+
 export default function MusicApp() {
   const [tracks] = useState(TRACKS);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -70,6 +85,7 @@ export default function MusicApp() {
   const [volume, setVolume] = useState(0.8);
   const [cleanMode, setCleanMode] = useState(false);
 
+  const isMobile = useIsMobile();
   const audioRef = useRef(null);
   const isPlayingRef = useRef(isPlaying);
 
@@ -79,6 +95,7 @@ export default function MusicApp() {
 
   const currentTrack = tracks[currentIndex] || tracks[0];
 
+  // Cmd+R / Ctrl+R shortcut handler for Clean Mode
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'r' && (e.metaKey || e.ctrlKey)) {
@@ -119,6 +136,7 @@ export default function MusicApp() {
     }
   }, [isPlaying, currentTrack.url]);
 
+  // Mobile Lockscreen / Control Center Integration
   useEffect(() => {
     if ('mediaSession' in navigator && currentTrack) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -137,6 +155,7 @@ export default function MusicApp() {
     }
   }, [currentTrack, togglePlay, handlePrev, handleNext]);
 
+  // Track switch & continuous playback listener
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -202,6 +221,7 @@ export default function MusicApp() {
 
   return (
     <main className={`music-app${cleanMode ? ' music-app--clean' : ''}`}>
+      {/* Hidden HTML5 Audio Player */}
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
@@ -209,17 +229,20 @@ export default function MusicApp() {
         onEnded={handleEnded}
       />
 
+      {/* Background WebGL Aurora */}
       <div className="music-app__bg">
         <Aurora
           colorStops={currentTrack.colors}
           blend={0.65}
-          amplitude={1.2}
+          amplitude={isMobile ? 0.8 : 1.2}
           speed={0.4}
         />
         <div className="music-app__vignette" />
       </div>
 
+      {/* Main Grid Viewport */}
       <div className="music-app__content">
+        {/* Wheel Panel */}
         <section className="music-app__wheel-panel">
           <div className="music-app__panel-brand">
             <span className="brand-dot" style={{ background: currentTrack.colors[0] }} />
@@ -228,16 +251,16 @@ export default function MusicApp() {
           <OptionWheel
             items={tracks.map((t) => t.title)}
             defaultSelected={0}
-            side="left"
+            side={isMobile ? "right" : "left"}
             textColor="#71717a"
             activeColor="#ffffff"
-            fontSize={2.2}
-            spacing={1.45}
+            fontSize={isMobile ? 1.5 : 2.2}
+            spacing={isMobile ? 1.3 : 1.45}
             curve={1.2}
-            tilt={7}
-            blur={3}
+            tilt={isMobile ? 5 : 7}
+            blur={isMobile ? 2 : 3}
             fade={0.3}
-            inset={40}
+            inset={isMobile ? 20 : 40}
             loop={true}
             draggable={true}
             soundUrl="/sounds/click-soft.mp3"
@@ -246,18 +269,19 @@ export default function MusicApp() {
           />
         </section>
 
+        {/* Display Panel */}
         <section className="music-app__display-panel">
           <ScrollExpand
             key={currentTrack.id || currentTrack.title}
             src={currentTrack.image}
             alt={currentTrack.title}
             title={cleanMode ? '' : currentTrack.title}
-            scrollHint={cleanMode ? '' : 'Scroll to expand • Reveal playbar'}
-            startWidth={56}
-            startHeight={66}
-            startRadius={22}
+            scrollHint={cleanMode ? '' : (isMobile ? 'Scroll down to expand' : 'Scroll to expand • Reveal playbar')}
+            startWidth={isMobile ? 85 : 56}
+            startHeight={isMobile ? 75 : 66}
+            startRadius={isMobile ? 16 : 22}
             endRadius={0}
-            mediaZoom={1.2}
+            mediaZoom={1.15}
             scrollDistance={1.0}
             useWindowScroll={false}
           >
