@@ -5,7 +5,7 @@ import ScrollExpand from './ScrollExpand';
 import WavyPlaybar from './WavyPlaybar';
 import './MusicApp.css';
 
-// Replace with your public R2 URL (r2.dev or custom subdomain)
+// Replace with your public R2 URL (e.g., https://pub-xxx.r2.dev or https://media.yourdomain.com)
 const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
 
 const COSMOS_THEMES = [
@@ -47,7 +47,7 @@ const RAW_TRACK_LIST = [
   { title: "Until I Found You", artist: "Stephen Sanchez", genre: "Retro Pop", file: "Stephen Sanchez - Until I Found You (Official Video) [GxldQ9eX2wo].mp3" }
 ];
 
-// Map track files to public R2 audio URLs and pair them with dynamic themes
+// Encodes filenames cleanly while targeting the /music/ subfolder in R2
 const TRACKS = RAW_TRACK_LIST.map((item, idx) => {
   const theme = COSMOS_THEMES[idx % COSMOS_THEMES.length];
   return {
@@ -55,7 +55,7 @@ const TRACKS = RAW_TRACK_LIST.map((item, idx) => {
     title: item.title,
     artist: item.artist,
     genre: item.genre,
-    url: `${BASE_R2_URL}/audio/${encodeURIComponent(item.file)}`,
+    url: `${BASE_R2_URL}/music/${encodeURIComponent(item.file)}`,
     image: theme.image,
     colors: theme.colors
   };
@@ -72,14 +72,13 @@ export default function MusicApp() {
 
   const audioRef = useRef(null);
   const isPlayingRef = useRef(isPlaying);
-  
+
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
   const currentTrack = tracks[currentIndex] || tracks[0];
 
-  // Cmd+R / Ctrl+R → Toggle Clean View Mode
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'r' && (e.metaKey || e.ctrlKey)) {
@@ -120,7 +119,6 @@ export default function MusicApp() {
     }
   }, [isPlaying, currentTrack.url]);
 
-  // Mobile Lockscreen / Control Center Media Controls
   useEffect(() => {
     if ('mediaSession' in navigator && currentTrack) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -139,7 +137,6 @@ export default function MusicApp() {
     }
   }, [currentTrack, togglePlay, handlePrev, handleNext]);
 
-  // Continuous playback stream handler on song change
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -205,7 +202,6 @@ export default function MusicApp() {
 
   return (
     <main className={`music-app${cleanMode ? ' music-app--clean' : ''}`}>
-      {/* HTML5 Audio Element */}
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
@@ -213,7 +209,6 @@ export default function MusicApp() {
         onEnded={handleEnded}
       />
 
-      {/* WebGL Animated Background */}
       <div className="music-app__bg">
         <Aurora
           colorStops={currentTrack.colors}
@@ -224,9 +219,7 @@ export default function MusicApp() {
         <div className="music-app__vignette" />
       </div>
 
-      {/* Main Grid Viewport */}
       <div className="music-app__content">
-        {/* Left Side: Option Wheel */}
         <section className="music-app__wheel-panel">
           <div className="music-app__panel-brand">
             <span className="brand-dot" style={{ background: currentTrack.colors[0] }} />
@@ -253,7 +246,6 @@ export default function MusicApp() {
           />
         </section>
 
-        {/* Right Side: Scroll Expand Showcase */}
         <section className="music-app__display-panel">
           <ScrollExpand
             key={currentTrack.id || currentTrack.title}
@@ -276,7 +268,6 @@ export default function MusicApp() {
                   <p>{currentTrack.artist} • {currentTrack.genre}</p>
                 </div>
 
-                {/* Playbar */}
                 <WavyPlaybar
                   track={currentTrack}
                   isPlaying={isPlaying}
