@@ -6,7 +6,7 @@ import WavyPlaybar from './WavyPlaybar';
 import './MusicApp.css';
 
 // Base Cloudflare R2 Bucket URL for static music and image assets
-const BASE_R2_URL = 'https://c1d394e0495daaa2a0f6b2fe064d5909.r2.cloudflarestorage.com/music-stuff';
+const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
 
 const COSMOS_THEMES = [
   { image: `${BASE_R2_URL}/images/earth-orbit.jpg`, genre: 'Earth Orbit', colors: ['#00d2ff', '#1e40af', '#090d16'] },
