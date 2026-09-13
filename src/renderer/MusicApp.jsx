@@ -21,6 +21,7 @@ const COSMOS_THEMES = [
   { image: `${BASE_R2_URL}/images/scenic-earth-sunrise.jpg`, colors: ['#f59e0b', '#d97706', '#1c0f00'] },
   { image: `${BASE_R2_URL}/images/space-deep-field.jpg`, colors: ['#60a5fa', '#a78bfa', '#090514'] },
   { image: `${BASE_R2_URL}/images/scenic-desert-galaxy.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
+  { image: `${BASE_R2_URL}/images/bmw-m5.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
 ];
 
 const RAW_TRACK_LIST = [
