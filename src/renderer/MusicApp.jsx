@@ -5,80 +5,56 @@ import ScrollExpand from './ScrollExpand';
 import WavyPlaybar from './WavyPlaybar';
 import './MusicApp.css';
 
-// Public Cloudflare R2 URL
-const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
-
 const COSMOS_THEMES = [
-  { image: `${BASE_R2_URL}/images/earth-orbit.jpg`, colors: ['#00d2ff', '#1e40af', '#090d16'] },
-  { image: `${BASE_R2_URL}/images/galaxy-spiral.jpg`, colors: ['#c084fc', '#6366f1', '#0f0728'] },
-  { image: `${BASE_R2_URL}/images/scenic-earth-aurora.jpg`, colors: ['#4ade80', '#06b6d4', '#061727'] },
-  { image: `${BASE_R2_URL}/images/space-nebula.jpg`, colors: ['#fb923c', '#e11d48', '#1a0d16'] },
-  { image: `${BASE_R2_URL}/images/scenic-earth-lake.jpg`, colors: ['#38bdf8', '#0284c7', '#081c24'] },
-  { image: `${BASE_R2_URL}/images/galaxy-milkyway.jpg`, colors: ['#a855f7', '#3b82f6', '#090d16'] },
-  { image: `${BASE_R2_URL}/images/earth-horizon.jpg`, colors: ['#38bdf8', '#2563eb', '#030712'] },
-  { image: `${BASE_R2_URL}/images/scenic-earth-peaks.jpg`, colors: ['#818cf8', '#6366f1', '#0c0a1f'] },
-  { image: `${BASE_R2_URL}/images/galaxy-andromeda.jpg`, colors: ['#f472b6', '#8b5cf6', '#12072b'] },
-  { image: `${BASE_R2_URL}/images/scenic-earth-sunrise.jpg`, colors: ['#f59e0b', '#d97706', '#1c0f00'] },
-  { image: `${BASE_R2_URL}/images/space-deep-field.jpg`, colors: ['#60a5fa', '#a78bfa', '#090514'] },
-  { image: `${BASE_R2_URL}/images/scenic-desert-galaxy.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
-  { image: `${BASE_R2_URL}/images/bmw-m5.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
+  { image: '/images/cosmos/earth-orbit.jpg', genre: 'Earth Orbit', colors: ['#00d2ff', '#1e40af', '#090d16'] },
+  { image: '/images/cosmos/galaxy-spiral.jpg', genre: 'Spiral Galaxy', colors: ['#c084fc', '#6366f1', '#0f0728'] },
+  { image: '/images/cosmos/scenic-earth-aurora.jpg', genre: 'Scenic Aurora', colors: ['#4ade80', '#06b6d4', '#061727'] },
+  { image: '/images/cosmos/space-nebula.jpg', genre: 'Cosmic Nebula', colors: ['#fb923c', '#e11d48', '#1a0d16'] },
+  { image: '/images/cosmos/scenic-earth-lake.jpg', genre: 'Scenic Earth Lake', colors: ['#38bdf8', '#0284c7', '#081c24'] },
+  { image: '/images/cosmos/galaxy-milkyway.jpg', genre: 'Milky Way Galaxy', colors: ['#a855f7', '#3b82f6', '#090d16'] },
+  { image: '/images/cosmos/earth-horizon.jpg', genre: 'Orbital Horizon', colors: ['#38bdf8', '#2563eb', '#030712'] },
+  { image: '/images/cosmos/scenic-earth-peaks.jpg', genre: 'Scenic Alpine Peaks', colors: ['#818cf8', '#6366f1', '#0c0a1f'] },
+  { image: '/images/cosmos/galaxy-andromeda.jpg', genre: 'Andromeda Galaxy', colors: ['#f472b6', '#8b5cf6', '#12072b'] },
+  { image: '/images/cosmos/scenic-earth-sunrise.jpg', genre: 'Earth Alpine Sunrise', colors: ['#f59e0b', '#d97706', '#1c0f00'] },
+  { image: '/images/cosmos/space-deep-field.jpg', genre: 'Deep Space Starfield', colors: ['#60a5fa', '#a78bfa', '#090514'] },
+  { image: '/images/cosmos/scenic-desert-galaxy.jpg', genre: 'Celestial Earth Vista', colors: ['#ec4899', '#f97316', '#140810'] },
 ];
 
-const RAW_TRACK_LIST = [
-  { title: "Pal Pal", artist: "Afusic ft. Talwiinder", genre: "Punjabi Indie", file: "Afusic - Pal Pal with @Talwiinder  (Official Visualiser) Prod. @AliSoomroMusic [AbkEmIgJMcU].mp3" },
-  { title: "We Don't Talk Anymore", artist: "Charlie Puth ft. Selena Gomez", genre: "Pop", file: "Charlie Puth - We Don't Talk Anymore (feat. Selena Gomez) [Official Video] [3AtDnEC4zak].mp3" },
-  { title: "Pehli Mohabbat", artist: "Darshan Raval", genre: "Romantic Pop", file: "Darshan Raval - Pehli Mohabbat - Asian Network in Mumbai [Gq2hcE4V7Jo].mp3" },
-  { title: "Perfect", artist: "Ed Sheeran", genre: "Acoustic Pop", file: "Ed Sheeran - Perfect (Official Music Video) [2Vv-BfVoq4g].mp3" },
-  { title: "HIGH ON YOU", artist: "Jind Universe", genre: "Indie Pop", file: "HIGH ON YOU - Jind Universe (OFFICIAL VIDEO) [yuF7Pw-_YIE].mp3" },
-  { title: "Take Me Home, Country Roads", artist: "John Denver", genre: "Folk Rock", file: "John Denver - Take Me Home, Country Roads (Official Audio) [1vrEljMfXYo].mp3" },
-  { title: "Way Down We Go", artist: "KALEO", genre: "Alternative Rock", file: "KALEO - Way Down We Go (Official Music Video) [0-7IHOXkiV8].mp3" },
-  { title: "Kangana Tera Ni (Slowed)", artist: "Abeer Arora", genre: "Chill Vibe", file: "Kangana Tera Ni (Slowed + Reverb) - ABEER ARORA ｜ Laung Mare Lashkare ｜ Also Holic [6n9CKm2YpGM].mp3" },
-  { title: "Brooklyn Baby", artist: "Lana Del Rey", genre: "Dream Pop", file: "Lana Del Rey - Brooklyn Baby (Official Audio) [T5xcnjAG8pE].mp3" },
-  { title: "Margaret", artist: "Lana Del Rey ft. Bleachers", genre: "Alt-Pop", file: "Lana Del Rey - Margaret (Audio) ft. Bleachers [2xtKhqbNBoY].mp3" },
-  { title: "Summertime Sadness", artist: "Lana Del Rey", genre: "Sad Pop", file: "Lana Del Rey - Summertime Sadness (Official Music Video) [TdrL3QxjyVw].mp3" },
-  { title: "Main Tenu Yaad Awanga", artist: "Punjabi Folk", genre: "Soulful", file: "Main Tenu Yaad Awanga [loZU1BuN5Lo].mp3" },
-  { title: "Mi Amor (Slowed)", artist: "Sharn", genre: "Slowed Ambient", file: "Mi Amor - Perfectly Slowed [XmA0huo5rqw].mp3" },
-  { title: "Mil Ke Baithange", artist: "Amrinder Gill", genre: "Punjabi Folk", file: "Mil Ke Baithange ｜ Angrej ｜ Amrinder Gill ｜ Full Music Video [Doo1T5WabEU].mp3" },
-  { title: "Nit Khair Mansan Sohnia", artist: "Sufi Traditional", genre: "Sufi", file: "Nit Khair Mansan Sohnia Main Teri [AfIBjGPsv2U].mp3" },
-  { title: "Night Changes", artist: "One Direction", genre: "Pop", file: "One Direction - Night Changes [syFZfO_wfMQ].mp3" },
-  { title: "Par Chanaa De", artist: "Coke Studio", genre: "Sufi Folk", file: "Par Chanaa De [wgN8a8nN79g].mp3" },
-  { title: "Let Her Go", artist: "Passenger", genre: "Folk Pop", file: "Passenger ｜ Let Her Go (Official Video) [RBumgq5yVrA].mp3" },
-  { title: "9_45", artist: "Prabh Singh ft. Jay Trak", genre: "Punjabi Hip-Hop", file: "Prabh Singh Ft Jay Trak - 9_45 (Official Music Video) [bzSn6AKLkMI].mp3" },
-  { title: "Sajjan Raazi", artist: "Satinder Sartaaj", genre: "Sufi Poetry", file: "Sajjan Raazi [t6vm8h5BDxo].mp3" },
-  { title: "Until I Found You", artist: "Stephen Sanchez", genre: "Retro Pop", file: "Stephen Sanchez - Until I Found You (Official Video) [GxldQ9eX2wo].mp3" }
+const DEFAULT_TRACKS = [
+  { title: 'Ambient Drift', artist: 'Cosmic Explorers', genre: 'Ambient', image: '/images/cosmos/earth-orbit.jpg', colors: ['#00d2ff', '#3a7bd5', '#101015'] },
+  { title: 'Neon Pulse', artist: 'Starlight Beats', genre: 'House', image: '/images/cosmos/galaxy-spiral.jpg', colors: ['#7cff67', '#b497cf', '#5227ff'] },
+  { title: 'Cyber Warehouse', artist: 'Orbital Resonance', genre: 'Techno', image: '/images/cosmos/space-nebula.jpg', colors: ['#ff0055', '#7a00ff', '#0d0d11'] },
+  { title: 'Midnight Session', artist: 'Lunar Quartet', genre: 'Jazz', image: '/images/cosmos/scenic-earth-sunrise.jpg', colors: ['#ffb347', '#ffcc33', '#1e1000'] },
+  { title: 'Lo-Fi Chill', artist: 'Aurora Soundscapes', genre: 'Lo-Fi', image: '/images/cosmos/scenic-earth-aurora.jpg', colors: ['#ff9a9e', '#fecfef', '#2b1055'] },
+  { title: 'Retro Highway', artist: 'Galactic Horizon', genre: 'Synthwave', image: '/images/cosmos/scenic-desert-galaxy.jpg', colors: ['#ff007f', '#00f0ff', '#240046'] }
 ];
 
-// Target /music/ folder in Cloudflare R2 and encode filenames
-const TRACKS = RAW_TRACK_LIST.map((item, idx) => {
-  const theme = COSMOS_THEMES[idx % COSMOS_THEMES.length];
-  return {
-    id: `track-${idx}`,
-    title: item.title,
-    artist: item.artist,
-    genre: item.genre,
-    url: `${BASE_R2_URL}/music/${encodeURIComponent(item.file)}`,
-    image: theme.image,
-    colors: theme.colors
-  };
-});
+// Fisher-Yates array shuffler
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
-// Custom hook to detect mobile viewport width dynamically
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
-  );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return isMobile;
-};
+// Generate harmonic color palette for custom images / seeds
+function generatePalette(seedStr) {
+  const hash = [...String(seedStr)].reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 7);
+  const hue1 = hash % 360;
+  const hue2 = (hue1 + 45 + ((hash >> 4) % 60)) % 360;
+  return [
+    `hsl(${hue1}, 85%, 62%)`,
+    `hsl(${hue2}, 75%, 52%)`,
+    `hsl(${(hue1 + 180) % 360}, 60%, 8%)`
+  ];
+}
 
 export default function MusicApp() {
-  const [tracks] = useState(TRACKS);
+  const [tracks, setTracks] = useState(DEFAULT_TRACKS);
+  const [rawTracks, setRawTracks] = useState([]);
+  const [availableImages, setAvailableImages] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -86,28 +62,146 @@ export default function MusicApp() {
   const [volume, setVolume] = useState(0.8);
   const [cleanMode, setCleanMode] = useState(false);
 
-  const isMobile = useIsMobile();
+  // Add Music Modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [downloadQuery, setDownloadQuery] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState('');
+
   const audioRef = useRef(null);
   const isPlayingRef = useRef(isPlaying);
-
+  
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
-  const currentTrack = tracks[currentIndex] || tracks[0];
+  const currentTrack = tracks[currentIndex] || DEFAULT_TRACKS[0];
 
-  // Cmd+R / Ctrl+R shortcut handler for Clean Mode
+  // Helper to map songs to randomly shuffled images and theme palettes
+  const buildRandomizedTracks = useCallback((sourceTracks, imagePool) => {
+    if (!Array.isArray(sourceTracks) || sourceTracks.length === 0) return DEFAULT_TRACKS;
+
+    const themePool = shuffleArray(COSMOS_THEMES);
+    const extraImages = Array.isArray(imagePool) ? imagePool : [];
+    const shuffledExtraImages = shuffleArray(extraImages);
+
+    return sourceTracks.map((item, idx) => {
+      let image, genre, colors;
+
+      if (shuffledExtraImages.length > 0 && Math.random() > 0.35) {
+        const img = shuffledExtraImages[idx % shuffledExtraImages.length];
+        const matchingTheme = COSMOS_THEMES.find(t => t.image === img);
+        if (matchingTheme) {
+          image = matchingTheme.image;
+          genre = matchingTheme.genre;
+          colors = matchingTheme.colors;
+        } else {
+          image = img;
+          genre = item.artist || 'Aria Cosmos';
+          colors = generatePalette(item.title + (item.artist || '') + idx);
+        }
+      } else {
+        const theme = themePool[idx % themePool.length];
+        image = theme.image;
+        genre = theme.genre;
+        colors = theme.colors;
+      }
+
+      return {
+        id: item.id || `track-${idx}`,
+        title: item.title || 'Untitled Track',
+        artist: item.artist || 'Aria Music',
+        duration: Number(item.duration) || 0,
+        url: item.url || '',
+        path: item.path || '',
+        genre,
+        image,
+        colors,
+      };
+    });
+  }, []);
+
+  // Refresh and randomize mapping on demand
+  const randomizeMapping = useCallback(() => {
+    if (rawTracks.length > 0) {
+      setTracks(buildRandomizedTracks(rawTracks, availableImages));
+    }
+  }, [rawTracks, availableImages, buildRandomizedTracks]);
+
+  // Load initial library & images and subscribe to real-time additions
+  useEffect(() => {
+    if (window.musicApp?.listImages) {
+      window.musicApp.listImages().then((imgs) => {
+        if (Array.isArray(imgs) && imgs.length > 0) {
+          setAvailableImages(imgs);
+        }
+      }).catch(() => {});
+    }
+
+    if (window.musicApp?.listLibrary) {
+      window.musicApp
+        .listLibrary()
+        .then((localTracks) => {
+          if (Array.isArray(localTracks) && localTracks.length > 0) {
+            setRawTracks(localTracks);
+            setTracks(buildRandomizedTracks(localTracks, []));
+          }
+        })
+        .catch((err) => {
+          console.warn('Could not load local library, using defaults:', err);
+        });
+    }
+
+    // Subscribe to live file updates from main process
+    let unsubLib = () => {};
+    let unsubImg = () => {};
+
+    if (window.musicApp?.onLibraryUpdated) {
+      unsubLib = window.musicApp.onLibraryUpdated((updatedTracks) => {
+        if (Array.isArray(updatedTracks) && updatedTracks.length > 0) {
+          setRawTracks(updatedTracks);
+          setTracks(buildRandomizedTracks(updatedTracks, availableImages));
+        }
+      });
+    }
+
+    if (window.musicApp?.onImagesUpdated) {
+      unsubImg = window.musicApp.onImagesUpdated((updatedImages) => {
+        if (Array.isArray(updatedImages) && updatedImages.length > 0) {
+          setAvailableImages(updatedImages);
+          if (rawTracks.length > 0) {
+            setTracks(buildRandomizedTracks(rawTracks, updatedImages));
+          }
+        }
+      });
+    }
+
+    return () => {
+      unsubLib();
+      unsubImg();
+    };
+  }, [buildRandomizedTracks]);
+
+  // Keyboard Shortcuts:
+  // Cmd+R / Ctrl+R → toggle Clean Mode
+  // Cmd+N / Ctrl+N → open Add Song modal
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'r' && (e.metaKey || e.ctrlKey)) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') {
         e.preventDefault();
         setCleanMode((prev) => !prev);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setShowAddModal((prev) => !prev);
+      } else if (e.key === 'Escape' && showAddModal) {
+        setShowAddModal(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showAddModal]);
 
+  // Next and Prev handlers
   const handleNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % tracks.length);
   }, [tracks.length]);
@@ -116,47 +210,7 @@ export default function MusicApp() {
     setCurrentIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
   }, [tracks.length]);
 
-  const togglePlay = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      if (!audio.src && currentTrack.url) {
-        audio.src = currentTrack.url;
-      }
-      audio
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((err) => {
-          console.warn('Playback error:', err);
-          setIsPlaying(false);
-        });
-    }
-  }, [isPlaying, currentTrack.url]);
-
-  // Mobile Lockscreen / Control Center Integration
-  useEffect(() => {
-    if ('mediaSession' in navigator && currentTrack) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
-        artist: currentTrack.artist || 'Aria Music',
-        album: currentTrack.genre || 'Cosmos',
-        artwork: [
-          { src: currentTrack.image, sizes: '512x512', type: 'image/jpeg' }
-        ]
-      });
-
-      navigator.mediaSession.setActionHandler('play', togglePlay);
-      navigator.mediaSession.setActionHandler('pause', togglePlay);
-      navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
-      navigator.mediaSession.setActionHandler('nexttrack', handleNext);
-    }
-  }, [currentTrack, togglePlay, handlePrev, handleNext]);
-
-  // Track switch & continuous playback listener
+  // Update audio source on track change
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -164,7 +218,6 @@ export default function MusicApp() {
     if (currentTrack.url) {
       audio.src = currentTrack.url;
       audio.load();
-      
       if (isPlayingRef.current) {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
@@ -180,6 +233,32 @@ export default function MusicApp() {
     setCurrentTime(0);
     setDuration(currentTrack.duration || 0);
   }, [currentIndex, currentTrack.url]);
+
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+    } else {
+      if (!audio.src && currentTrack.url) {
+        audio.src = currentTrack.url;
+      }
+      audio
+        .play()
+        .then(() => {
+          isPlayingRef.current = true;
+          setIsPlaying(true);
+        })
+        .catch((err) => {
+          console.warn('Playback error:', err);
+          isPlayingRef.current = false;
+          setIsPlaying(false);
+        });
+    }
+  }, [isPlaying, currentTrack.url]);
 
   const handleSeek = useCallback((newTime) => {
     const audio = audioRef.current;
@@ -220,9 +299,37 @@ export default function MusicApp() {
     setIsPlaying(true);
   };
 
+  // Handle adding/downloading new song
+  const handleAddSongSubmit = async (e) => {
+    e?.preventDefault();
+    const query = downloadQuery.trim();
+    if (!query || isDownloading) return;
+
+    setIsDownloading(true);
+    setDownloadStatus('Searching and downloading track...');
+
+    try {
+      if (window.musicApp?.download) {
+        await window.musicApp.download(query);
+        setDownloadStatus('Track added to library!');
+        setDownloadQuery('');
+        setTimeout(() => {
+          setShowAddModal(false);
+          setDownloadStatus('');
+          setIsDownloading(false);
+        }, 1200);
+      } else {
+        throw new Error('Downloader service not available');
+      }
+    } catch (err) {
+      setDownloadStatus(`Error: ${err.message || 'Download failed'}`);
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <main className={`music-app${cleanMode ? ' music-app--clean' : ''}`}>
-      {/* Hidden HTML5 Audio Player */}
+      {/* HTML5 Audio Element */}
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
@@ -230,12 +337,12 @@ export default function MusicApp() {
         onEnded={handleEnded}
       />
 
-      {/* Background WebGL Aurora */}
+      {/* Background WebGL Layer */}
       <div className="music-app__bg">
         <Aurora
           colorStops={currentTrack.colors}
           blend={0.65}
-          amplitude={isMobile ? 0.8 : 1.2}
+          amplitude={1.2}
           speed={0.4}
         />
         <div className="music-app__vignette" />
@@ -243,25 +350,53 @@ export default function MusicApp() {
 
       {/* Main Grid Viewport */}
       <div className="music-app__content">
-        {/* Wheel Panel */}
+        {/* Left Side: Option Wheel */}
         <section className="music-app__wheel-panel">
           <div className="music-app__panel-brand">
             <span className="brand-dot" style={{ background: currentTrack.colors[0] }} />
             <span>ARIA COSMOS</span>
+
+            {/* Action buttons: Shuffle Photos & Add Song */}
+            <div className="music-app__panel-actions">
+              <button
+                className="panel-action-btn"
+                title="Shuffle Photos & Color Themes"
+                onClick={randomizeMapping}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 3 21 3 21 8"></polyline>
+                  <line x1="4" y1="20" x2="21" y2="3"></line>
+                  <polyline points="21 16 21 21 16 21"></polyline>
+                  <line x1="15" y1="15" x2="21" y2="21"></line>
+                  <line x1="4" y1="4" x2="9" y2="9"></line>
+                </svg>
+              </button>
+              <button
+                className="panel-action-btn"
+                title="Add New Music (Cmd+N)"
+                onClick={() => setShowAddModal(true)}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
           </div>
+
           <OptionWheel
             items={tracks.map((t) => t.title)}
             defaultSelected={0}
-            side={isMobile ? "right" : "left"}
+            side="left"
             textColor="#71717a"
             activeColor="#ffffff"
-            fontSize={isMobile ? 1.5 : 2.2}
-            spacing={isMobile ? 1.3 : 1.45}
+            fontSize={2.2}
+            spacing={1.45}
             curve={1.2}
-            tilt={isMobile ? 5 : 7}
-            blur={isMobile ? 2 : 3}
+            tilt={7}
+            blur={cleanMode ? 0 : 2}
             fade={0.3}
-            inset={isMobile ? 20 : 40}
+            inset={40}
             loop={true}
             draggable={true}
             soundUrl="/sounds/click-soft.mp3"
@@ -270,19 +405,19 @@ export default function MusicApp() {
           />
         </section>
 
-        {/* Display Panel */}
+        {/* Right Side: Scroll Expand Showcase */}
         <section className="music-app__display-panel">
           <ScrollExpand
             key={currentTrack.id || currentTrack.title}
             src={currentTrack.image}
             alt={currentTrack.title}
             title={cleanMode ? '' : currentTrack.title}
-            scrollHint={cleanMode ? '' : (isMobile ? 'Scroll down to expand' : 'Scroll to expand • Reveal playbar')}
-            startWidth={isMobile ? 85 : 56}
-            startHeight={isMobile ? 75 : 66}
-            startRadius={isMobile ? 16 : 22}
+            scrollHint={cleanMode ? '' : 'Scroll to expand • Reveal wavy playbar'}
+            startWidth={56}
+            startHeight={66}
+            startRadius={22}
             endRadius={0}
-            mediaZoom={1.15}
+            mediaZoom={1.2}
             scrollDistance={1.0}
             useWindowScroll={false}
           >
@@ -293,6 +428,7 @@ export default function MusicApp() {
                   <p>{currentTrack.artist} • {currentTrack.genre}</p>
                 </div>
 
+                {/* Wavy Playbar */}
                 <WavyPlaybar
                   track={currentTrack}
                   isPlaying={isPlaying}
@@ -310,6 +446,61 @@ export default function MusicApp() {
           </ScrollExpand>
         </section>
       </div>
+
+      {/* Add Song Modal */}
+      {showAddModal && (
+        <div className="add-music-backdrop" onClick={() => !isDownloading && setShowAddModal(false)}>
+          <div className="add-music-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="add-music-modal__header">
+              <h3>Add New Track</h3>
+              <button
+                className="add-music-modal__close"
+                onClick={() => setShowAddModal(false)}
+                disabled={isDownloading}
+              >
+                ✕
+              </button>
+            </div>
+            <p className="add-music-modal__desc">
+              Enter any song title, artist name, or YouTube URL to automatically download and add it to Aria.
+            </p>
+            <form onSubmit={handleAddSongSubmit} className="add-music-form">
+              <input
+                type="text"
+                className="add-music-input"
+                placeholder="e.g. Interstellar Theme or YouTube link"
+                value={downloadQuery}
+                onChange={(e) => setDownloadQuery(e.target.value)}
+                autoFocus
+                disabled={isDownloading}
+              />
+              <div className="add-music-actions">
+                <button
+                  type="button"
+                  className="add-music-cancel"
+                  onClick={() => setShowAddModal(false)}
+                  disabled={isDownloading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="add-music-submit"
+                  disabled={isDownloading || !downloadQuery.trim()}
+                >
+                  {isDownloading ? 'Downloading...' : 'Download & Add'}
+                </button>
+              </div>
+            </form>
+            {downloadStatus && (
+              <div className={`download-status ${downloadStatus.startsWith('Error') ? 'is-error' : ''}`}>
+                {isDownloading && <span className="status-spinner" />}
+                <span>{downloadStatus}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
