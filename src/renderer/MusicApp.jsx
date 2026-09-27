@@ -22,6 +22,9 @@ const COSMOS_THEMES = [
   { image: `${BASE_R2_URL}/images/space-deep-field.jpg`, colors: ['#60a5fa', '#a78bfa', '#090514'] },
   { image: `${BASE_R2_URL}/images/scenic-desert-galaxy.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
   { image: `${BASE_R2_URL}/images/bmw-m5.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
+  { image: `${BASE_R2_URL}/images/Screenshot 2026-09-27 at 3.13.16 PM.png`, colors: ['#ec2899', '#f97376', '#140310'] },
+  { image: `${BASE_R2_URL}/images/pexels-francesco-ungaro-12553116.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
+  { image: `${BASE_R2_URL}/images/wp2605667-wallpaper-optimus-prime.jpg`, colors: ['#ec4899', '#f97316', '#140810'] }
 ];
 
 const RAW_TRACK_LIST = [
@@ -45,7 +48,13 @@ const RAW_TRACK_LIST = [
   { title: "Let Her Go", artist: "Passenger", genre: "Folk Pop", file: "Passenger ｜ Let Her Go (Official Video) [RBumgq5yVrA].mp3" },
   { title: "9_45", artist: "Prabh Singh ft. Jay Trak", genre: "Punjabi Hip-Hop", file: "Prabh Singh Ft Jay Trak - 9_45 (Official Music Video) [bzSn6AKLkMI].mp3" },
   { title: "Sajjan Raazi", artist: "Satinder Sartaaj", genre: "Sufi Poetry", file: "Sajjan Raazi [t6vm8h5BDxo].mp3" },
-  { title: "Until I Found You", artist: "Stephen Sanchez", genre: "Retro Pop", file: "Stephen Sanchez - Until I Found You (Official Video) [GxldQ9eX2wo].mp3" }
+  { title: "Until I Found You", artist: "Stephen Sanchez", genre: "Retro Pop", file: "Stephen Sanchez - Until I Found You (Official Video) [GxldQ9eX2wo].mp3" },
+  { title: "Sajjan Raazi", artist: "Satinder Sartaaj", genre: "Sufi Poetry", file: "Sajjan Raazi [t6vm8h5BDxo].mp3" },
+  { title: "Sajjan Raazi", artist: "Satinder Sartaaj", genre: "Sufi Poetry", file: "Sajjan Raazi [t6vm8h5BDxo].mp3" },
+  { title: "Aa Chal Ke Tujhe", artist: "Jagjit Singh", genre: "Classical", file: "Aa Chal Ke Tujhe .mp3" },
+  { title: "Hothon Se Chhu Lo", artist: "Jagjit Singh", genre: "Classical", file: "Hothon Se Chhu Lo Tum (From ＂Prem Geet＂) [31f0mVT2Mvc].mp3" },
+  { title: "Kal Chaudvi Ki Raat", artist: "Jagjit Singh", genre: "Classical", file: "Kal Chaudhvin Ki Raat .mp3" },
+  { title: "Love me not", artist: "Ravyn Lenae", genre: "Angrez", file: "Ravyn Lenae - Love Me Not (Lyrics) [w71znGyLAbQ].mp3" }
 ];
 
 // Target /music/ folder in Cloudflare R2 and encode filenames
