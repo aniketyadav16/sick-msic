@@ -63,6 +63,7 @@ body, html, #root {
   position: absolute;
   top: 1.5rem;
   left: 1.5rem;
+  right: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -169,5 +170,240 @@ body, html, #root {
 
   .music-app--clean .music-app__wheel-panel {
     transform: translateY(-100%);
+  }
+}
+
+/* ── Brand Action Buttons (Shuffle + Add) ─────────────────────── */
+.brand-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: auto;
+}
+
+.brand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+}
+
+.brand-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* ── Add Music Modal ──────────────────────────────────────────── */
+.add-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: addModalIn 0.2s ease-out;
+}
+
+@keyframes addModalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.add-modal {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(16, 17, 23, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.add-modal__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.add-modal__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.9rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+  margin-bottom: 0.85rem;
+  transition: border-color 0.18s;
+}
+
+.add-modal__input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.add-modal__input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.add-modal__row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.add-modal__file-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.add-modal__file-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.add-modal__submit-btn {
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  background: #ffffff;
+  border: none;
+  color: #000000;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.add-modal__submit-btn:hover:not(:disabled) {
+  background: #e4e4e7;
+}
+
+.add-modal__submit-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Voice Listener Pill (Top-Right Floating Glassmorphism) ──────── */
+.voice-listener-pill {
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  background: rgba(18, 19, 26, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 340px;
+}
+
+.voice-listener-pill:hover {
+  background: rgba(28, 30, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+}
+
+.voice-listener-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
+}
+
+.voice-mic-icon {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.75);
+  transition: color 0.2s;
+}
+
+.voice-listener-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+  letter-spacing: 0.01em;
+}
+
+.voice-listener-pill.is-listening {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ffffff;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.28);
+}
+
+.voice-listener-pill.is-listening .voice-listener-pulse {
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: voicePulseRing 1.4s ease-in-out infinite;
+}
+
+.voice-listener-pill.is-listening .voice-mic-icon {
+  color: #ef4444;
+}
+
+@keyframes voicePulseRing {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+
+.music-app--clean .voice-listener-pill {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .voice-listener-pill {
+    top: 1rem;
+    right: 1rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    max-width: 200px;
+  }
+  .voice-listener-text {
+    max-width: 130px;
   }
 }

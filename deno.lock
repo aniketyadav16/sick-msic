@@ -1,0 +1,26 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@deno/installer-shell-setup@*": "0.3.4"
+  },
+  "jsr": {
+    "@deno/installer-shell-setup@0.3.4": {
+      "integrity": "48665d1a737d487cce6874bc97bba70a5aeffa7053aca3f60df93c6fab8963b4"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@aws-sdk/client-s3@^3.1140.0",
+        "npm:@vitejs/plugin-react@^6.1.1",
+        "npm:dotenv@^18.0.4",
+        "npm:electron@^43.2.0",
+        "npm:music-metadata@^11.14.0",
+        "npm:ogl@^1.0.11",
+        "npm:react-dom@^19.3.0",
+        "npm:react@^19.3.0",
+        "npm:vite@^8.3.0"
+      ]
+    }
+  }
+}
