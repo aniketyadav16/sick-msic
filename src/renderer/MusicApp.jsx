@@ -254,6 +254,10 @@ export default function MusicApp() {
   // Web Speech API continuous listening state
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [speechError, setSpeechError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef(null);
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
   const lastMatchTimeRef = useRef(0);
@@ -266,38 +270,49 @@ export default function MusicApp() {
   const normalize = (str) =>
     str ? str.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim() : '';
 
-  // Match spoken text against track titles, artists, or lyrics
+  // Match text against track titles, artists, or lyrics
   const findMatchingTrack = useCallback((spokenText) => {
     const text = normalize(spokenText);
-    if (!text || text.length < 2) return -1;
+    if (!text || text.length < 2) return null;
 
     for (let i = 0; i < tracks.length; i++) {
       const track = tracks[i];
       const titleNorm = normalize(track.title);
       const artistNorm = normalize(track.artist);
 
-      // Check title match
+      // 1. Title match
       if (titleNorm && (text.includes(titleNorm) || (titleNorm.length > 3 && titleNorm.includes(text)))) {
-        return i;
+        return { index: i, matchType: 'title', matchText: track.title };
       }
 
-      // Check artist match
-      if (artistNorm && text.includes(artistNorm)) {
-        return i;
-      }
-
-      // Check lyrics match
+      // 2. Lyrics match
       if (Array.isArray(track.lyrics)) {
         for (const lyric of track.lyrics) {
           const lyricNorm = normalize(lyric);
-          if (lyricNorm && (text.includes(lyricNorm) || (lyricNorm.length > 5 && lyricNorm.includes(text)))) {
-            return i;
+          if (lyricNorm && (text.includes(lyricNorm) || (lyricNorm.length > 4 && lyricNorm.includes(text)))) {
+            return { index: i, matchType: 'lyric', matchText: lyric };
           }
         }
       }
+
+      // 3. Artist match
+      if (artistNorm && text.includes(artistNorm)) {
+        return { index: i, matchType: 'artist', matchText: track.artist };
+      }
     }
-    return -1;
+    return null;
   }, [tracks]);
+
+  const playMatchedTrack = useCallback((idx) => {
+    if (idx >= 0 && idx < tracks.length) {
+      setCurrentIndex(idx);
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+      if (audioRef.current) {
+        audioRef.current.play().catch(() => {});
+      }
+    }
+  }, [tracks.length]);
 
   // Handle Speech Recognition lifecycle
   useEffect(() => {
@@ -327,25 +342,32 @@ export default function MusicApp() {
       if (spoken) {
         setTranscript(spoken);
 
-        const matchedIdx = findMatchingTrack(spoken);
+        const match = findMatchingTrack(spoken);
         const now = Date.now();
-        if (matchedIdx !== -1 && (now - lastMatchTimeRef.current > 1500 || matchedIdx !== currentIndex)) {
+        if (match && (now - lastMatchTimeRef.current > 1500 || match.index !== currentIndex)) {
           lastMatchTimeRef.current = now;
-          setCurrentIndex(matchedIdx);
-          setIsPlaying(true);
-          isPlayingRef.current = true;
+          playMatchedTrack(match.index);
         }
       }
     };
 
     recognition.onerror = (event) => {
-      if (event.error !== 'no-speech' && event.error !== 'aborted') {
-        console.warn('Speech recognition error:', event.error);
+      // In Electron desktop, Chromium lacks Google's proprietary Speech API key
+      // and returns 'network' / 'not-allowed'. Stop the loop and open lyric search.
+      if (event.error === 'network' || event.error === 'service-not-allowed' || event.error === 'not-allowed') {
+        isListeningRef.current = false;
+        setIsListening(false);
+        setSpeechError('network');
+        setIsSearchOpen(true);
+        setTimeout(() => searchInputRef.current?.focus(), 150);
+      } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        console.warn('Speech recognition notice:', event.error);
       }
     };
 
     recognition.onend = () => {
-      if (isListeningRef.current) {
+      // Only keep continuous listening if user hasn't toggled off and no network error occurred
+      if (isListeningRef.current && !speechError) {
         try {
           recognition.start();
         } catch {
@@ -363,14 +385,15 @@ export default function MusicApp() {
         recognition.stop();
       } catch {}
     };
-  }, [findMatchingTrack, currentIndex]);
+  }, [findMatchingTrack, currentIndex, playMatchedTrack, speechError]);
 
   const toggleListening = useCallback(() => {
     const SpeechRecognition = typeof window !== 'undefined' &&
       (window.SpeechRecognition || window.webkitSpeechRecognition);
 
     if (!SpeechRecognition) {
-      alert('Web Speech API is not supported in this browser/environment.');
+      setIsSearchOpen(true);
+      setTimeout(() => searchInputRef.current?.focus(), 150);
       return;
     }
 
@@ -387,11 +410,16 @@ export default function MusicApp() {
       isListeningRef.current = true;
       setIsListening(true);
       setTranscript('');
+      setSpeechError(null);
       if (recognitionRef.current) {
         try {
           recognitionRef.current.start();
         } catch (err) {
           console.warn('Recognition start error:', err);
+          setIsListening(false);
+          isListeningRef.current = false;
+          setIsSearchOpen(true);
+          setTimeout(() => searchInputRef.current?.focus(), 150);
         }
       }
     }
@@ -664,25 +692,114 @@ export default function MusicApp() {
 
       {/* Floating Voice Listener Pill (top-right, hidden in cleanMode) */}
       {!cleanMode && (
-        <button
-          className={`voice-listener-pill ${isListening ? 'is-listening' : ''}`}
-          onClick={toggleListening}
-          title={isListening ? "Listening for lyrics or song names... click to stop" : "Start Voice & Lyric Search"}
-          type="button"
-        >
-          <span className="voice-listener-pulse" />
-          <svg className="voice-mic-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <line x1="12" y1="19" x2="12" y2="23"/>
-            <line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
-          <span className="voice-listener-text">
-            {isListening
-              ? (transcript ? `"${transcript}"` : "Listening lyrics...")
-              : "Voice Search"}
-          </span>
-        </button>
+        <div className={`voice-listener-container ${isSearchOpen ? 'is-expanded' : ''}`}>
+          <button
+            className={`voice-listener-pill ${isListening ? 'is-listening' : ''}`}
+            onClick={toggleListening}
+            title={isListening ? "Listening for lyrics or song names... click to stop" : "Start Voice & Lyric Search"}
+            type="button"
+          >
+            <span className="voice-listener-pulse" />
+            <svg className="voice-mic-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+            <span className="voice-listener-text">
+              {isListening
+                ? (transcript ? `"${transcript}"` : "Listening lyrics...")
+                : (transcript ? `"${transcript}"` : "Voice Search")}
+            </span>
+            <span
+              className="voice-search-toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSearchOpen((prev) => !prev);
+                if (!isSearchOpen) {
+                  setTimeout(() => searchInputRef.current?.focus(), 150);
+                }
+              }}
+              title="Search by lyrics or title"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+          </button>
+
+          {isSearchOpen && (
+            <div className="voice-search-dropdown">
+              <div className="voice-search-input-wrap">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  className="voice-search-input"
+                  placeholder="Type or dictate lyric (e.g. night changes)..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    setSearchQuery(q);
+                    const match = findMatchingTrack(q);
+                    if (match && q.length >= 3) {
+                      playMatchedTrack(match.index);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const match = findMatchingTrack(searchQuery);
+                      if (match) {
+                        playMatchedTrack(match.index);
+                        setIsSearchOpen(false);
+                      }
+                    } else if (e.key === 'Escape') {
+                      setIsSearchOpen(false);
+                    }
+                  }}
+                />
+                <button
+                  className="voice-search-close"
+                  onClick={() => setIsSearchOpen(false)}
+                  type="button"
+                >
+                  ✕
+                </button>
+              </div>
+              {speechError === 'network' && (
+                <div className="voice-search-hint">
+                  <span>Electron speech service offline. Type lyrics or use macOS dictation (Fn Fn).</span>
+                </div>
+              )}
+              {searchQuery && (
+                <div className="voice-search-results">
+                  {tracks
+                    .map((t, idx) => {
+                      const match = findMatchingTrack(searchQuery);
+                      if (match && match.index === idx) return { track: t, idx, match };
+                      return null;
+                    })
+                    .filter(Boolean)
+                    .map(({ track, idx, match }) => (
+                      <div
+                        key={track.id || idx}
+                        className="voice-search-result-item"
+                        onClick={() => {
+                          playMatchedTrack(idx);
+                          setIsSearchOpen(false);
+                        }}
+                      >
+                        <div className="voice-result-title">{track.title}</div>
+                        <div className="voice-result-subtitle">
+                          {match.matchType === 'lyric' ? `Matched Lyric: "${match.matchText}"` : track.artist}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Background WebGL Aurora */}
