@@ -19,6 +19,7 @@ const DEFAULT_ITEMS = [
 const OptionWheel = ({
   items = DEFAULT_ITEMS,
   defaultSelected = 3,
+  value = undefined,
   onChange,
   textColor = '#a6a6a6',
   activeColor = '#ffffff',
@@ -256,6 +257,18 @@ const OptionWheel = ({
   useEffect(() => {
     applyTarget(targetRef.current, false);
   }, [items, fontSize, spacing, curve, tilt, blur, fade, minOpacity, side, loop, smoothing, applyTarget]);
+
+  // Sync wheel position when the parent drives `value` externally
+  // (e.g. voice search, next/prev, auto-play). We directly update refs and
+  // animate without calling onChangeRef so we don't loop back into MusicApp.
+  useEffect(() => {
+    if (value === undefined || value === null) return;
+    const idx = ((Math.round(value) % items.length) + items.length) % items.length;
+    targetRef.current = idx;
+    selectedRef.current = idx;
+    setSelectedIndex(idx);
+    startLoop();
+  }, [value, items.length, startLoop]);
 
   useEffect(
     () => () => {

@@ -849,6 +849,7 @@ export default function MusicApp() {
           <OptionWheel
             items={tracks.map((t) => t.title)}
             defaultSelected={0}
+            value={currentIndex}
             side={isMobile ? "right" : "left"}
             textColor="#71717a"
             activeColor="#ffffff"
