@@ -93,7 +93,7 @@ function createApp({ storage = createStorage(), password = process.env.UPLOAD_PA
         if (match && req.method === 'POST' && match[2]) {
           limit(req, 'password', 25);
           const payload = await json(req);
-          return reply(res, 202, jobs.upload(match[1], payload.password || process.env.UPLOAD_PASSWORD || 'minion'));
+          return reply(res, 202, jobs.upload(match[1], payload.password || process.env.UPLOAD_PASSWORD || 'minion', payload));
         }
         return reply(res, 404, { error: 'API route not found.' });
       }

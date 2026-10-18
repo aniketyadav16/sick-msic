@@ -116,10 +116,10 @@ test('HTTP workflow, CORS, invalid requests, no secret exposure, library persist
   assert.ok(!JSON.stringify(ready).includes('minion')); assert.equal(ready.file, undefined);
   assert.equal((await post(`/api/songs/${id}/upload`, { password: 'incorrect' })).status, 401);
   assert.equal(saved.length, 0);
-  assert.equal((await post(`/api/songs/${id}/upload`, { password: 'minion' })).status, 202);
+  assert.equal((await post(`/api/songs/${id}/upload`, { password: 'minion', alias: 'My Clean Alias' })).status, 202);
   await waitFor(read, 'complete');
   const library = await (await fetch(base + '/api/tracks')).json();
-  assert.equal(library.tracks[0].title, 'A song');
+  assert.equal(library.tracks[0].title, 'My Clean Alias');
   assert.equal((await fetch(base + '/api/missing')).status, 404);
   await post('/api/songs', { query: 'x' }); await post('/api/songs', { query: 'y' });
   assert.equal((await post('/api/songs', { query: 'z' })).status, 429);

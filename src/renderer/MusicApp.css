@@ -548,6 +548,12 @@ body, html, #root {
 .add-modal__status { color: #d4d4d8; font-size: .88rem; line-height: 1.5; margin-bottom: 1rem; }
 .add-modal progress { width: 100%; height: 6px; accent-color: #a5b4fc; margin-bottom: 1.2rem; }
 .add-modal__error { color: #fda4af; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.add-modal__badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; background: rgba(165, 180, 252, 0.15); color: #a5b4fc; border: 1px solid rgba(165, 180, 252, 0.3); margin-bottom: 0.45rem; }
+.add-modal__orig-label { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.add-modal__alias-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.25rem; }
+.add-modal__alias-tag { font-size: 0.72rem; color: #38bdf8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.add-modal__alias-edit-btn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #d4d4d8; border-radius: 6px; padding: 0.2rem 0.55rem; font-size: 0.72rem; font-weight: 500; cursor: pointer; transition: all 0.18s ease; }
+.add-modal__alias-edit-btn:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; border-color: rgba(255, 255, 255, 0.4); }
 .add-modal button:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
 .add-modal__row { flex-wrap: wrap; }
 .library-notice { position: absolute; top: 70px; left: 30px; right: 15px; z-index: 2; color: #a1a1aa; font-size: .7rem; }

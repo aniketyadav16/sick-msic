@@ -44,7 +44,7 @@ function createJobs({ storage, password, downloader = downloadSong, ttl = 30 * 6
       return snapshot(job);
     },
     status(id) { return snapshot(get(id)); },
-    upload(id, candidate) {
+    upload(id, candidate, options = {}) {
       const job = get(id);
       if (!password) throw fail('Upload password is not configured on the server.', 503);
       if (job.attempts >= 5) throw fail('Too many incorrect passwords. Start a new download.', 429);
@@ -55,6 +55,15 @@ function createJobs({ storage, password, downloader = downloadSong, ttl = 30 * 6
       if (job.state === 'complete' || job.state === 'uploading') return snapshot(job);
       if (job.state !== 'awaiting_password') throw fail('Wait for the song to finish downloading.', 409);
       if ([...jobs.values()].filter(busy).length >= 2) throw fail('The song queue is full. Please try again shortly.', 429);
+
+      const customTitle = options.alias || options.title;
+      if (customTitle && typeof customTitle === 'string' && customTitle.trim() && job.track) {
+        job.track.title = customTitle.trim();
+      }
+      if (options.artist && typeof options.artist === 'string' && options.artist.trim() && job.track) {
+        job.track.artist = options.artist.trim();
+      }
+
       job.state = 'uploading'; job.error = undefined;
       job.task = (async () => {
         try {

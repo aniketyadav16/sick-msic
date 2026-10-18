@@ -56,7 +56,7 @@ function runCommand(command, args, cwd) {
  * @param {string} query - YouTube URL or song name search query
  * @returns {Promise<{id: string, title: string, artist: string, duration: number, key: string, url: string, size: number}>}
  */
-async function uploadSongToR2(query) {
+async function uploadSongToR2(query, alias) {
   if (!query || typeof query !== 'string' || !query.trim()) {
     throw new Error('Please provide a song name or YouTube URL.');
   }
@@ -90,7 +90,8 @@ async function uploadSongToR2(query) {
 
     const parsed = JSON.parse(infoOutput);
     const info = parsed.entries?.[0] || parsed;
-    const title = (info.track || info.title || 'Untitled').replace(/[/\\?%*:|"<>]/g, '_');
+    const rawTitle = (info.track || info.title || 'Untitled');
+    const title = (alias && typeof alias === 'string' && alias.trim() ? alias.trim() : rawTitle).replace(/[/\\?%*:|"<>]/g, '_');
     const artist = (info.artist || info.uploader || 'Aria Music').replace(/[/\\?%*:|"<>]/g, '_');
     const duration = Number(info.duration) || 0;
     const id = info.id || `yt-${Date.now()}`;
@@ -160,14 +161,15 @@ async function uploadSongToR2(query) {
   }
 }
 
-// Allow direct CLI invocation: node scripts/upload-music.js "song query"
+// Allow direct CLI invocation: node scripts/upload-music.js "song query" [optional-alias]
 if (require.main === module) {
-  const query = process.argv.slice(2).join(' ').trim();
+  const query = process.argv[2]?.trim();
+  const alias = process.argv[3]?.trim();
   if (!query) {
-    console.log('Usage: node scripts/upload-music.js <"song name" or "https://youtube.com/watch?v=...">');
+    console.log('Usage: node scripts/upload-music.js <"song name" or "https://youtube.com/watch?v=..."> [song_alias]');
     process.exit(1);
   }
-  uploadSongToR2(query)
+  uploadSongToR2(query, alias)
     .then((track) => {
       console.log(JSON.stringify(track, null, 2));
       process.exit(0);
