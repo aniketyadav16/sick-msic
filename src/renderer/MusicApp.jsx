@@ -1,13 +1,14 @@
-// const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Aurora from './Aurora';
 import OptionWheel from './OptionWheel';
 import ScrollExpand from './ScrollExpand';
 import WavyPlaybar from './WavyPlaybar';
 import './MusicApp.css';
+import AddSongModal from './AddSongModal';
+import { musicApi } from './music-api';
 
 // Public Cloudflare R2 URL
-const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
+const BASE_R2_URL = (import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev').replace(/\/$/, '');
 
 const COSMOS_THEMES = [
   { image: `${BASE_R2_URL}/images/earth-orbit.jpg`, colors: ['#00d2ff', '#1e40af', '#090d16'] },
@@ -211,6 +212,7 @@ const TRACKS = RAW_TRACK_LIST.map((item, idx) => {
   const theme = COSMOS_THEMES[idx % COSMOS_THEMES.length];
   return {
     id: `track-${idx}`,
+    key: `music/${item.file}`,
     title: item.title,
     artist: item.artist,
     genre: item.genre,
@@ -238,6 +240,7 @@ const useIsMobile = () => {
 
 export default function MusicApp() {
   const [tracks, setTracks] = useState(TRACKS);
+  const [themes, setThemes] = useState(COSMOS_THEMES);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageIndex, setImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -247,9 +250,11 @@ export default function MusicApp() {
   const [cleanMode, setCleanMode] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addInput, setAddInput] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
+  const [libraryError, setLibraryError] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadNotice, setUploadNotice] = useState('');
   const fileInputRef = useRef(null);
+  const imageFileInputRef = useRef(null);
 
   // Web Speech API continuous listening state
   const [isListening, setIsListening] = useState(false);
@@ -419,23 +424,87 @@ export default function MusicApp() {
           setIsListening(false);
           isListeningRef.current = false;
           setIsSearchOpen(true);
-          setTimeout(() => searchInputRef.current?.focus(), 150);
         }
       }
     }
   }, [isListening]);
 
+  // Load cloud images from R2 on mount
+  useEffect(() => {
+    let active = true;
+    musicApi('/images')
+      .then((res) => {
+        if (!active || !Array.isArray(res?.images) || !res.images.length) return;
+        const cloudThemes = res.images.map((img) => ({
+          image: img.url,
+          colors: ['#00d2ff', '#3b82f6', '#090d16']
+        }));
+        setThemes((prev) => {
+          const existingUrls = new Set(prev.map((t) => t.image));
+          const toAdd = cloudThemes.filter((t) => !existingUrls.has(t.image));
+          return toAdd.length ? [...toAdd, ...prev] : prev;
+        });
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  // Upload an image selected from this machine to R2 images/ folder
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingImage(true);
+    setUploadNotice('Uploading image to R2 cloud storage…');
+    try {
+      const reader = new FileReader();
+      const base64Promise = new Promise((resolve, reject) => {
+        reader.onload = () => {
+          const res = reader.result;
+          resolve(typeof res === 'string' ? res.split(',')[1] : '');
+        };
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64 = await base64Promise;
+
+      const result = await musicApi('/images', {
+        filename: file.name,
+        base64,
+        contentType: file.type || 'image/jpeg'
+      });
+
+      if (result?.image?.url) {
+        const newTheme = {
+          image: result.image.url,
+          colors: ['#38bdf8', '#818cf8', '#090d16']
+        };
+        setThemes((prev) => [newTheme, ...prev]);
+        setImageIndex(0);
+        setUploadNotice(`Uploaded "${result.image.name}" to R2 images!`);
+      } else {
+        throw new Error('Image upload failed.');
+      }
+    } catch (err) {
+      console.error('Image upload error:', err);
+      setUploadNotice(`Upload failed: ${err.message}`);
+    } finally {
+      setIsUploadingImage(false);
+      setTimeout(() => setUploadNotice(''), 4500);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   // Sync image index when switching tracks
   useEffect(() => {
-    setImageIndex(currentIndex % COSMOS_THEMES.length);
-  }, [currentIndex]);
+    setImageIndex(currentIndex % themes.length);
+  }, [currentIndex, themes.length]);
 
   // Global keydown handler: Shift+Enter for image cycle & Cmd/Ctrl+R for clean mode
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.shiftKey && e.key === 'Enter') {
         e.preventDefault();
-        setImageIndex((prev) => (prev + 1) % COSMOS_THEMES.length);
+        setImageIndex((prev) => (prev + 1) % themes.length);
       } else if (e.key === 'r' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setCleanMode((prev) => !prev);
@@ -443,7 +512,7 @@ export default function MusicApp() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [themes.length]);
 
   // Triple-tap listener for touch devices (works on mobile view & desktop site mode on mobile)
   useEffect(() => {
@@ -477,19 +546,19 @@ export default function MusicApp() {
 
       if (tapCount === 3) {
         e.preventDefault(); // Prevent double-tap zoom or text selection
-        setImageIndex((prev) => (prev + 1) % COSMOS_THEMES.length);
+        setImageIndex((prev) => (prev + 1) % themes.length);
         tapCount = 0; // Reset counter after successful triple-tap
       }
     };
 
     window.addEventListener('touchstart', handleTouchStart, { passive: false });
     return () => window.removeEventListener('touchstart', handleTouchStart);
-  }, []);
+  }, [themes.length]);
 
   // Shuffle images across tracks
   const handleShuffleImages = useCallback(() => {
     setTracks((prevTracks) => {
-      const shuffledThemes = [...COSMOS_THEMES].sort(() => Math.random() - 0.5);
+      const shuffledThemes = [...themes].sort(() => Math.random() - 0.5);
       return prevTracks.map((track, i) => {
         const theme = shuffledThemes[i % shuffledThemes.length];
         return {
@@ -499,7 +568,7 @@ export default function MusicApp() {
         };
       });
     });
-  }, []);
+  }, [themes]);
 
   // Add music from local audio file
   const handleFileChange = (e) => {
@@ -507,7 +576,7 @@ export default function MusicApp() {
     if (!file) return;
     const url = URL.createObjectURL(file);
     const fileName = file.name.replace(/\.[^/.]+$/, "");
-    const randomTheme = COSMOS_THEMES[Math.floor(Math.random() * COSMOS_THEMES.length)];
+    const randomTheme = themes[Math.floor(Math.random() * themes.length)];
     const newTrack = {
       id: `track-custom-${Date.now()}`,
       title: fileName,
@@ -523,39 +592,40 @@ export default function MusicApp() {
     setShowAddModal(false);
   };
 
-  // Add music from link or query
-  const handleAddSubmit = async (e) => {
-    e.preventDefault();
-    const query = addInput.trim();
-    if (!query) return;
+  const mergeCloudTracks = useCallback((incoming) => {
+    setTracks((previous) => {
+      const urls = new Set(previous.map((track) => track.url));
+      const ids = new Set(previous.map((track) => track.id));
+      const keys = new Set(previous.map((track) => track.key).filter(Boolean));
+      const additions = incoming.filter((track) => !ids.has(track.id) && !urls.has(track.url) && !keys.has(track.key));
+      return [...previous, ...additions.map((track, index) => ({
+        ...track,
+        image: themes[(previous.length + index) % themes.length].image,
+        colors: themes[(previous.length + index) % themes.length].colors,
+        lyrics: track.lyrics || [],
+      }))];
+    });
+  }, [themes]);
 
-    setIsAdding(true);
-    try {
-      if (window.musicApp?.download) {
-        await window.musicApp.download(query);
-      } else {
-        const randomTheme = COSMOS_THEMES[Math.floor(Math.random() * COSMOS_THEMES.length)];
-        const newTrack = {
-          id: `track-custom-${Date.now()}`,
-          title: query.split('/').pop()?.split('?')[0] || query,
-          artist: 'Web Stream',
-          genre: 'Custom',
-          url: query,
-          image: randomTheme.image,
-          colors: randomTheme.colors,
-          lyrics: []
-        };
-        setTracks((prev) => [newTrack, ...prev]);
-        setCurrentIndex(0);
-      }
-      setAddInput('');
-      setShowAddModal(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAdding(false);
-    }
-  };
+  // Append records so library refreshes don't interrupt the currently playing song.
+  useEffect(() => {
+    let disposed = false;
+    const refresh = async () => {
+      try {
+        const result = await musicApi('/tracks');
+        if (!disposed) { mergeCloudTracks(result.tracks); setLibraryError(''); }
+      } catch (error) { if (!disposed) setLibraryError(error.message); }
+    };
+    refresh();
+    const timer = setInterval(refresh, 30_000);
+    window.addEventListener('focus', refresh);
+    return () => { disposed = true; clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, [mergeCloudTracks]);
+
+  const handleSongAdded = useCallback((track) => {
+    mergeCloudTracks([track]);
+    setLibraryError('');
+  }, [mergeCloudTracks]);
 
   const isMobile = useIsMobile();
   const audioRef = useRef(null);
@@ -566,7 +636,7 @@ export default function MusicApp() {
   }, [isPlaying]);
 
   const currentTrack = tracks[currentIndex] || tracks[0];
-  const currentTheme = COSMOS_THEMES[imageIndex % COSMOS_THEMES.length];
+  const currentTheme = themes[imageIndex % themes.length] || themes[0];
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % tracks.length);
@@ -835,20 +905,39 @@ export default function MusicApp() {
                 </svg>
               </button>
               <button
-                className="brand-btn"
-                title="Add Music"
+                className="brand-btn brand-btn--add-image"
+                title="Select image from this machine and upload to R2"
+                type="button"
+                onClick={() => imageFileInputRef.current?.click()}
+                disabled={isUploadingImage}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span>{isUploadingImage ? 'Uploading…' : 'Add image'}</span>
+              </button>
+              <button
+                className="brand-btn brand-btn--add"
+                title="Add song"
+                type="button"
+                aria-haspopup="dialog"
                 onClick={() => setShowAddModal(true)}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
+                <span>Add song</span>
               </button>
             </div>
           </div>
+          {libraryError && <p className="library-notice" role="status" title={libraryError}>Cloud additions unavailable · existing songs are ready</p>}
           <OptionWheel
+            key={tracks.length}
             items={tracks.map((t) => t.title)}
-            defaultSelected={0}
+            defaultSelected={currentIndex}
             value={currentIndex}
             side={isMobile ? "right" : "left"}
             textColor="#71717a"
@@ -918,38 +1007,26 @@ export default function MusicApp() {
         onChange={handleFileChange}
       />
 
-      {/* Add Music Modal */}
-      {showAddModal && (
-        <div className="add-modal-backdrop" onClick={() => setShowAddModal(false)}>
-          <div className="add-modal" onClick={(e) => e.stopPropagation()}>
-            <p className="add-modal__title">Add Music</p>
-            <form onSubmit={handleAddSubmit}>
-              <input
-                className="add-modal__input"
-                type="text"
-                placeholder="YouTube URL or song name"
-                value={addInput}
-                onChange={(e) => setAddInput(e.target.value)}
-                autoFocus
-              />
-              <div className="add-modal__row">
-                <button
-                  type="button"
-                  className="add-modal__file-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Local File
-                </button>
-                <button
-                  type="submit"
-                  className="add-modal__submit-btn"
-                  disabled={isAdding || !addInput.trim()}
-                >
-                  {isAdding ? '...' : 'Add'}
-                </button>
-              </div>
-            </form>
-          </div>
+      <AddSongModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdded={handleSongAdded}
+        onLocalFile={() => fileInputRef.current?.click()}
+      />
+
+      {/* Hidden file input for uploading images to R2 */}
+      <input
+        ref={imageFileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImageUpload}
+      />
+
+      {/* Toast notification */}
+      {uploadNotice && (
+        <div className="upload-toast" role="status">
+          {uploadNotice}
         </div>
       )}
     </main>

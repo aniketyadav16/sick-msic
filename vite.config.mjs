@@ -10,6 +10,7 @@ export default defineConfig({
   plugins: [react()],
   root: path.resolve(__dirname, 'src/renderer'),
   base: './',
+  envDir: __dirname,
   publicDir: path.resolve(__dirname, 'src/renderer/public'),
   build: {
     outDir: path.resolve(__dirname, 'dist'),
@@ -17,5 +18,6 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    proxy: { '/api': 'http://127.0.0.1:3001' },
   },
 });

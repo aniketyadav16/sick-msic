@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "vite build && env -u ELECTRON_RUN_AS_NODE electron ."
+    "start": "vite build && env -u ELECTRON_RUN_AS_NODE electron .",
+    "server": "node server/index.js",
+    "upload:music": "node scripts/upload-music.js",
+    "upload:image": "node scripts/upload-image.js",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [],
   "author": "",
@@ -23,5 +27,8 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.1",
     "vite": "^8.3.0"
+  },
+  "engines": {
+    "node": ">=22.14"
   }
 }

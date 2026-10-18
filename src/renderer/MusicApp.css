@@ -537,3 +537,64 @@ body, html, #root {
     width: 260px;
   }
 }
+
+.add-modal { margin: 1rem; max-height: 90dvh; overflow-y: auto; }
+.add-modal__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.add-modal__heading .add-modal__title { margin: 0; }
+.add-modal__hint { color: #a1a1aa; font-size: .78rem; line-height: 1.6; margin: .8rem 0 1.2rem; }
+.add-modal label { display: block; font-size: .8rem; color: #d4d4d8; margin-bottom: .5rem; }
+.add-modal__track { display: flex; flex-direction: column; gap: .4rem; padding: 1rem; background: #ffffff09; border-radius: 10px; margin-bottom: 1rem; overflow-wrap: anywhere; }
+.add-modal__track span { color: #a1a1aa; font-size: .85rem; }
+.add-modal__status { color: #d4d4d8; font-size: .88rem; line-height: 1.5; margin-bottom: 1rem; }
+.add-modal progress { width: 100%; height: 6px; accent-color: #a5b4fc; margin-bottom: 1.2rem; }
+.add-modal__error { color: #fda4af; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.add-modal button:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
+.add-modal__row { flex-wrap: wrap; }
+.library-notice { position: absolute; top: 70px; left: 30px; right: 15px; z-index: 2; color: #a1a1aa; font-size: .7rem; }
+
+.music-app__panel-brand { z-index: 3; }
+.brand-btn--add { width: auto; min-height: 32px; padding: 0 .75rem; gap: .35rem; border-radius: 9px; font-size: .75rem; font-weight: 600; white-space: nowrap; color: #fff; background: rgba(165, 180, 252, .16); border-color: rgba(165, 180, 252, .35); }
+.brand-btn--add:hover { transform: none; background: rgba(165, 180, 252, .28); }
+.brand-btn--add-image { width: auto; min-height: 32px; padding: 0 .75rem; gap: .35rem; border-radius: 9px; font-size: .75rem; font-weight: 600; white-space: nowrap; color: #fff; background: rgba(56, 189, 248, .16); border-color: rgba(56, 189, 248, .35); }
+.brand-btn--add-image:hover { transform: none; background: rgba(56, 189, 248, .28); }
+.brand-btn--add-image:disabled { opacity: 0.6; cursor: not-allowed; }
+.brand-btn:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
+
+.upload-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 18, 22, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #f1f5f9;
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+  animation: toastFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .brand-actions { position: absolute; top: 36px; left: 0; margin-left: 0; }
+  .library-notice { top: 93px; left: 16px; }
+}
