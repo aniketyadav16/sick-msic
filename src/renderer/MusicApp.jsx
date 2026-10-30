@@ -1,4 +1,3 @@
-// const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Aurora from './Aurora';
 import OptionWheel from './OptionWheel';
@@ -6,27 +5,18 @@ import ScrollExpand from './ScrollExpand';
 import WavyPlaybar from './WavyPlaybar';
 import './MusicApp.css';
 
-// Public Cloudflare R2 URL
 const BASE_R2_URL = 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev';
+const MANIFEST_URL = `${BASE_R2_URL}/manifest.json`;
 
-const dynamicTracks = data.music.map((trackData, idx) => {
-        const theme = dynamicThemes[idx % dynamicThemes.length] || dynamicThemes[0];
-        
-        // Split the alias into title and artist based on the hyphen
-        const [title, artist] = trackData.alias.split(" - ");
+const DYNAMIC_PALETTES = [
+  ['#00d2ff', '#1e40af', '#090d16'],
+  ['#c084fc', '#6366f1', '#0f0728'],
+  ['#4ade80', '#06b6d4', '#061727'],
+  ['#fb923c', '#e11d48', '#1a0d16'],
+  ['#f59e0b', '#d97706', '#1c0f00'],
+  ['#ec4899', '#f97316', '#140810']
+];
 
-        return {
-          id: `track-${idx}`,
-          title: title.trim(),
-          artist: artist ? artist.trim() : "Aria Cosmos",
-          genre: "Vibe",
-          url: `${BASE_R2_URL}/music/${encodeURIComponent(trackData.file)}`, // Use the real filename for the URL
-          image: theme.image,
-          colors: theme.colors
-        };
-      });
-
-// Custom hook to detect mobile viewport width dynamically
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
@@ -42,7 +32,11 @@ const useIsMobile = () => {
 };
 
 export default function MusicApp() {
-  const [tracks, setTracks] = useState(TRACKS);
+  const [tracks, setTracks] = useState([]);
+  const [themes, setThemes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageIndex, setImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -51,206 +45,82 @@ export default function MusicApp() {
   const [volume, setVolume] = useState(0.8);
   const [cleanMode, setCleanMode] = useState(false);
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addInput, setAddInput] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-  const fileInputRef = useRef(null);
-
-  // Sync image index when switching tracks
-  useEffect(() => {
-    setImageIndex(currentIndex % COSMOS_THEMES.length);
-  }, [currentIndex]);
-
-  // Global keydown handler: Shift+Enter for image cycle & Cmd/Ctrl+R for clean mode
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.shiftKey && e.key === 'Enter') {
-        e.preventDefault();
-        setImageIndex((prev) => (prev + 1) % COSMOS_THEMES.length);
-      } else if (e.key === 'r' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setCleanMode((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Triple-tap listener for touch devices (works on mobile view & desktop site mode on mobile)
-  useEffect(() => {
-    let tapCount = 0;
-    let lastTapTime = 0;
-    let lastTapX = 0;
-    let lastTapY = 0;
-
-    const handleTouchStart = (e) => {
-      // Don't intercept taps inside buttons, inputs, or interactive controls
-      if (e.target.closest('button, input, form, .wavy-playbar, .option-wheel')) {
-        return;
-      }
-
-      const touch = e.touches[0];
-      const currentTime = Date.now();
-      const timeDiff = currentTime - lastTapTime;
-      const distX = Math.abs(touch.clientX - lastTapX);
-      const distY = Math.abs(touch.clientY - lastTapY);
-
-      // If tap is within 300ms and close to previous tap location (no heavy dragging)
-      if (timeDiff < 300 && distX < 30 && distY < 30) {
-        tapCount += 1;
-      } else {
-        tapCount = 1;
-      }
-
-      lastTapTime = currentTime;
-      lastTapX = touch.clientX;
-      lastTapY = touch.clientY;
-
-      if (tapCount === 3) {
-        e.preventDefault(); // Prevent double-tap zoom or text selection
-        setImageIndex((prev) => (prev + 1) % COSMOS_THEMES.length);
-        tapCount = 0; // Reset counter after successful triple-tap
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    return () => window.removeEventListener('touchstart', handleTouchStart);
-  }, []);
-
-  // Shuffle images across tracks
-  const handleShuffleImages = useCallback(() => {
-    setTracks((prevTracks) => {
-      const shuffledThemes = [...COSMOS_THEMES].sort(() => Math.random() - 0.5);
-      return prevTracks.map((track, i) => {
-        const theme = shuffledThemes[i % shuffledThemes.length];
-        return {
-          ...track,
-          image: theme.image,
-          colors: theme.colors,
-        };
-      });
-    });
-  }, []);
-
-  // Add music from local audio file
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    const fileName = file.name.replace(/\.[^/.]+$/, "");
-    const randomTheme = COSMOS_THEMES[Math.floor(Math.random() * COSMOS_THEMES.length)];
-    const newTrack = {
-      id: `track-custom-${Date.now()}`,
-      title: fileName,
-      artist: 'Local Music',
-      genre: 'Custom',
-      url,
-      image: randomTheme.image,
-      colors: randomTheme.colors,
-    };
-    setTracks((prev) => [newTrack, ...prev]);
-    setCurrentIndex(0);
-    setShowAddModal(false);
-  };
-
-  // Add music from link or query
-  const handleAddSubmit = async (e) => {
-    e.preventDefault();
-    const query = addInput.trim();
-    if (!query) return;
-
-    setIsAdding(true);
-    try {
-      if (window.musicApp?.download) {
-        await window.musicApp.download(query);
-      } else {
-        const randomTheme = COSMOS_THEMES[Math.floor(Math.random() * COSMOS_THEMES.length)];
-        const newTrack = {
-          id: `track-custom-${Date.now()}`,
-          title: query.split('/').pop()?.split('?')[0] || query,
-          artist: 'Web Stream',
-          genre: 'Custom',
-          url: query,
-          image: randomTheme.image,
-          colors: randomTheme.colors,
-        };
-        setTracks((prev) => [newTrack, ...prev]);
-        setCurrentIndex(0);
-      }
-      setAddInput('');
-      setShowAddModal(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
   const isMobile = useIsMobile();
   const audioRef = useRef(null);
   const isPlayingRef = useRef(isPlaying);
+
+  // FETCH MANIFEST
+  useEffect(() => {
+    async function loadManifest() {
+      try {
+        const response = await fetch(MANIFEST_URL);
+        if (!response.ok) throw new Error("Could not fetch manifest");
+        
+        const data = await response.json();
+
+        const dynamicThemes = data.images.map((imgName, idx) => ({
+          image: `${BASE_R2_URL}/images/${encodeURIComponent(imgName)}`,
+          colors: DYNAMIC_PALETTES[idx % DYNAMIC_PALETTES.length]
+        }));
+
+        const dynamicTracks = data.music.map((trackData, idx) => {
+          const theme = dynamicThemes[idx % dynamicThemes.length] || dynamicThemes[0];
+          
+          // Safely split the alias (e.g. "Song - Artist" -> ["Song", "Artist"])
+          const splitData = trackData.alias ? trackData.alias.split(" - ") : ["Unknown Track"];
+          const title = splitData[0].trim();
+          const artist = splitData[1] ? splitData[1].trim() : "Aria Cosmos";
+
+          return {
+            id: `track-${idx}`,
+            title: title,
+            artist: artist,
+            genre: "Vibe",
+            url: `${BASE_R2_URL}/music/${encodeURIComponent(trackData.file)}`,
+            image: theme.image,
+            colors: theme.colors
+          };
+        });
+
+        setThemes(dynamicThemes);
+        setTracks(dynamicTracks);
+      } catch (err) {
+        console.error("Manifest load error:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadManifest();
+  }, []);
+
+  // Sync image index when switching tracks
+  useEffect(() => {
+    if (themes.length > 0) {
+      setImageIndex(currentIndex % themes.length);
+    }
+  }, [currentIndex, themes.length]);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
-  const currentTrack = tracks[currentIndex] || tracks[0];
-  const currentTheme = COSMOS_THEMES[imageIndex % COSMOS_THEMES.length];
-
   const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % tracks.length);
+    if (tracks.length) setCurrentIndex((prev) => (prev + 1) % tracks.length);
   }, [tracks.length]);
 
   const handlePrev = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
+    if (tracks.length) setCurrentIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
   }, [tracks.length]);
-
-  const togglePlay = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      if (!audio.src && currentTrack.url) {
-        audio.src = currentTrack.url;
-      }
-      audio
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((err) => {
-          console.warn('Playback error:', err);
-          setIsPlaying(false);
-        });
-    }
-  }, [isPlaying, currentTrack.url]);
-
-  // Mobile Lockscreen / Control Center Integration
-  useEffect(() => {
-    if ('mediaSession' in navigator && currentTrack) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
-        artist: currentTrack.artist || 'Aria Music',
-        album: currentTrack.genre || 'Cosmos',
-        artwork: [
-          { src: currentTheme.image, sizes: '512x512', type: 'image/jpeg' }
-        ]
-      });
-
-      navigator.mediaSession.setActionHandler('play', togglePlay);
-      navigator.mediaSession.setActionHandler('pause', togglePlay);
-      navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
-      navigator.mediaSession.setActionHandler('nexttrack', handleNext);
-    }
-  }, [currentTrack, currentTheme, togglePlay, handlePrev, handleNext]);
 
   // Track switch & continuous playback listener
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || tracks.length === 0) return;
 
-    if (currentTrack.url) {
+    const currentTrack = tracks[currentIndex];
+    if (currentTrack?.url) {
       audio.src = currentTrack.url;
       audio.load();
       
@@ -260,109 +130,74 @@ export default function MusicApp() {
           playPromise
             .then(() => setIsPlaying(true))
             .catch((err) => {
-              console.warn('Autoplay prevented on track switch:', err);
+              console.warn('Autoplay prevented:', err);
               setIsPlaying(false);
             });
         }
       }
     }
     setCurrentTime(0);
-    setDuration(currentTrack.duration || 0);
-  }, [currentIndex, currentTrack.url]);
+    setDuration(0);
+  }, [currentIndex, tracks]);
+
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      audio.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    }
+  }, [isPlaying]);
 
   const handleSeek = useCallback((newTime) => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.currentTime = newTime;
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
       setCurrentTime(newTime);
     }
   }, []);
 
   const handleVolumeChange = useCallback((newVol) => {
     setVolume(newVol);
-    if (audioRef.current) {
-      audioRef.current.volume = newVol;
-    }
+    if (audioRef.current) audioRef.current.volume = newVol;
   }, []);
 
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
+  // SAFETY CHECKS (Prevents the black screen crash)
+  if (isLoading) {
+    return <div className="music-app" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'white' }}>Connecting to Cosmos...</div>;
+  }
 
-  const handleLoadedMetadata = () => {
-    if (audioRef.current && audioRef.current.duration) {
-      setDuration(audioRef.current.duration);
-    }
-  };
+  if (error || tracks.length === 0) {
+    return <div className="music-app" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'white' }}>No music found or CORS error. Press F12 to check console.</div>;
+  }
 
-  const handleEnded = () => {
-    isPlayingRef.current = true;
-    setIsPlaying(true);
-    handleNext();
-  };
-
-  const handleWheelChange = (index) => {
-    setCurrentIndex(index);
-    isPlayingRef.current = true;
-    setIsPlaying(true);
-  };
+  const currentTrack = tracks[currentIndex];
+  const currentTheme = themes[imageIndex % themes.length];
 
   return (
     <main className={`music-app${cleanMode ? ' music-app--clean' : ''}`}>
-      {/* Hidden HTML5 Audio Player */}
       <audio
         ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
+        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+        onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
+        onEnded={() => { isPlayingRef.current = true; setIsPlaying(true); handleNext(); }}
       />
 
-      {/* Background WebGL Aurora */}
       <div className="music-app__bg">
-        <Aurora
-          colorStops={currentTheme.colors}
-          blend={0.65}
-          amplitude={isMobile ? 0.8 : 1.2}
-          speed={0.4}
-        />
+        <Aurora colorStops={currentTheme.colors} blend={0.65} amplitude={isMobile ? 0.8 : 1.2} speed={0.4} />
         <div className="music-app__vignette" />
       </div>
 
-      {/* Main Grid Viewport */}
       <div className="music-app__content">
-        {/* Wheel Panel */}
         <section className="music-app__wheel-panel">
           <div className="music-app__panel-brand">
             <span className="brand-dot" style={{ background: currentTheme.colors[0] }} />
             <span>ARIA COSMOS</span>
-            <div className="brand-actions">
-              <button
-                className="brand-btn"
-                title="Shuffle Images"
-                onClick={handleShuffleImages}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="16 3 21 3 21 8"></polyline>
-                  <line x1="4" y1="20" x2="21" y2="3"></line>
-                  <polyline points="21 16 21 21 16 21"></polyline>
-                  <line x1="15" y1="15" x2="21" y2="21"></line>
-                  <line x1="4" y1="4" x2="9" y2="9"></line>
-                </svg>
-              </button>
-              <button
-                className="brand-btn"
-                title="Add Music"
-                onClick={() => setShowAddModal(true)}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-              </button>
-            </div>
           </div>
+          
           <OptionWheel
             items={tracks.map((t) => t.title)}
             defaultSelected={0}
@@ -380,18 +215,21 @@ export default function MusicApp() {
             draggable={true}
             soundUrl="/sounds/click-soft.mp3"
             soundVolume={0.4}
-            onChange={handleWheelChange}
+            onChange={(index) => {
+              setCurrentIndex(index);
+              isPlayingRef.current = true;
+              setIsPlaying(true);
+            }}
           />
         </section>
 
-        {/* Display Panel */}
         <section className="music-app__display-panel">
           <ScrollExpand
-            key={`${currentTrack.id || currentTrack.title}-${imageIndex}`}
+            key={`${currentTrack.id}-${imageIndex}`}
             src={currentTheme.image}
             alt={currentTrack.title}
             title={cleanMode ? '' : currentTrack.title}
-            scrollHint={cleanMode ? '' : (isMobile ? 'Scroll down to expand' : 'Scroll to expand • Reveal playbar')}
+            scrollHint={cleanMode ? '' : (isMobile ? 'Scroll down to expand' : 'Scroll to expand')}
             startWidth={isMobile ? 85 : 56}
             startHeight={isMobile ? 75 : 66}
             startRadius={isMobile ? 16 : 22}
@@ -406,12 +244,11 @@ export default function MusicApp() {
                   <h2>{currentTrack.title}</h2>
                   <p>{currentTrack.artist} • {currentTrack.genre}</p>
                 </div>
-
                 <WavyPlaybar
                   track={currentTrack}
                   isPlaying={isPlaying}
                   currentTime={currentTime}
-                  duration={duration || currentTrack.duration}
+                  duration={duration || 0}
                   volume={volume}
                   onPlayPause={togglePlay}
                   onNext={handleNext}
@@ -424,50 +261,6 @@ export default function MusicApp() {
           </ScrollExpand>
         </section>
       </div>
-
-      {/* Hidden file input for local files */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="audio/*"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-
-      {/* Add Music Modal */}
-      {showAddModal && (
-        <div className="add-modal-backdrop" onClick={() => setShowAddModal(false)}>
-          <div className="add-modal" onClick={(e) => e.stopPropagation()}>
-            <p className="add-modal__title">Add Music</p>
-            <form onSubmit={handleAddSubmit}>
-              <input
-                className="add-modal__input"
-                type="text"
-                placeholder="YouTube URL or song name"
-                value={addInput}
-                onChange={(e) => setAddInput(e.target.value)}
-                autoFocus
-              />
-              <div className="add-modal__row">
-                <button
-                  type="button"
-                  className="add-modal__file-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Local File
-                </button>
-                <button
-                  type="submit"
-                  className="add-modal__submit-btn"
-                  disabled={isAdding || !addInput.trim()}
-                >
-                  {isAdding ? '...' : 'Add'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
