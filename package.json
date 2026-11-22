@@ -9,7 +9,9 @@
     "server": "node server/index.js",
     "upload:music": "node scripts/upload-music.js",
     "upload:image": "node scripts/upload-image.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "build:voice": "node scripts/build-voice.js",
+    "prestart": "npm run build:voice"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +27,9 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
     "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.5",
     "vite": "^8.3.0"
   },
   "engines": {

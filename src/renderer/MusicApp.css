@@ -604,3 +604,7 @@ body, html, #root {
   .brand-actions { position: absolute; top: 36px; left: 0; margin-left: 0; }
   .library-notice { top: 93px; left: 16px; }
 }
+
+.voice-language { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-top: .75rem; font-size: .75rem; color: #a1a1aa; }
+.voice-language select { color: #e4e4e7; background: #18181b; border: 1px solid #3f3f46; border-radius: 6px; padding: .3rem; }
+.voice-search-error { color: #fda4af; }

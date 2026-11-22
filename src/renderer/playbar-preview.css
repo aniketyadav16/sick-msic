@@ -1,0 +1,26 @@
+html, body { margin: 0; min-height: 100%; background: #111113; color: #eee8dc; font-family: system-ui, sans-serif; }
+body { background: radial-gradient(ellipse at 55% 45%, #4e36251d, transparent 65%), #111113; }
+.studies { max-width: 1320px; margin: auto; padding: 35px 40px 28px; }
+.studies header { display: flex; justify-content: space-between; align-items: center; }
+.studies__brand { display: flex; gap: 12px; align-items: center; color: #c6bdae; font: 10px ui-monospace, monospace; letter-spacing: .13em; }
+.studies__brand > span { font-size: 24px; color: #dcc5a2; }.studies__brand i { color: #555; }
+.studies__edition { font: 9px ui-monospace, monospace; color: #726e67; letter-spacing: .1em; }
+.studies__intro { display: flex; justify-content: space-between; align-items: flex-end; margin: 48px 0 40px; }
+.studies__intro h1 { margin: 0; font: 500 56px/.98 Georgia, serif; letter-spacing: -.04em; }
+.studies__intro h1 em { color: #b6a790; font-weight: 400; }
+.studies__intro p { margin: 0 0 4px; color: #a29b92; font-size: 12px; line-height: 1.8; }
+.studies__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.study { min-width: 0; }
+.study__label { display: flex; align-items: center; gap: 10px; border-top: 1px solid #ffffff1c; padding-top: 18px; margin-bottom: 17px; }
+.study__label > span { font: 9px ui-monospace, monospace; color: #8b8172; }
+.study__label h2 { font: 500 15px system-ui, sans-serif; margin: 0; letter-spacing: -.03em; }
+.study__player { min-height: 375px; display: flex; align-items: center; }
+.study__player .studio-surface { padding: 19px; }
+.study__player .orbit__body { grid-template-columns: 125px minmax(0,1fr); gap: 14px; }
+.study__player .orbit__disc { width: 125px; }
+.study__player .orbit__meta h3 { font-size: 27px; }
+.study__player .mixtape__status { font-size: 6px; }
+.study__description { color: #989188; font-size: 11px; line-height: 1.8; max-width: 285px; margin: 16px 0 30px; }
+.studies footer { border-top: 1px solid #ffffff16; padding-top: 20px; display: flex; justify-content: space-between; gap: 15px; color: #78726b; font-size: 10px; }
+.studies footer > span:last-child { font: 8px ui-monospace, monospace; letter-spacing: .12em; }
+@media(max-width: 850px) { .studies { padding: 25px; } .studies__grid { grid-template-columns: 1fr; max-width: 420px; margin: auto; } .studies__intro { display: block; margin-top: 35px; } .studies__intro h1 { font-size: 46px; } .studies__intro p { margin-top: 20px; }.study__player { min-height: 0; }.studies__edition { display: none; }.studies footer { flex-direction: column; } }

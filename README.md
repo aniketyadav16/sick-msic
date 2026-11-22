@@ -2,6 +2,14 @@
 
 React 19 + Vite music player with an Electron desktop shell. The player has a curved song wheel, WebGL aurora backgrounds, expanding artwork, playback/seek/volume controls, media-session controls, voice/title/lyric matching, image switching, clean mode, and temporary local-file playback. The existing 25 curated songs stream from the public R2 bucket.
 
+## Library views
+
+Use **Wheel / Gallery** at the top to change how you browse songs. The view is remembered on this device; switching preserves the current song, playback position, and volume. Gallery uses the React Bits `InfiniteMenu` TypeScript + CSS component with each song's assigned artwork, including cloud additions and temporary local tracks.
+
+Drag the sphere or focus it and use the arrow keys to browse. Click a surrounding image to bring it forward, then click the center image or **Play song** to listen. Enter or Space also plays the focused song. Browsing and the three-second automatic gallery rotation do not change playback; automatic rotation pauses on hover or focus and is disabled for reduced motion. Previous/next and voice search also bring the selected song into view. The bottom player provides playback, seeking, and volume controls. **Shuffle images** reassigns artwork across the library.
+
+Cloud images fall back to bundled artwork if unavailable. If WebGL 2 is unavailable, Gallery presents clickable image cards. No new runtime dependencies are needed.
+
 ## Adding songs
 
 Click **Add song** in the left panel, enter a song name or a single YouTube video link, and select **Find & download**. The backend uses the first YouTube search result, shows the matched title/artist and download progress, and converts the audio to MP3. Enter the upload password (**minion** by default; optionally overridden with `UPLOAD_PASSWORD`) to upload directly from the backend to R2. A completed song appears in the wheel without interrupting playback. Other clients refresh new additions every 30 seconds and when the window regains focus.
@@ -69,5 +77,22 @@ Tests cover query validation, authorization, wrong-password lockout, upload retr
 - New cloud flow: `AddSongModal.jsx`, `music-api.js`, and `server/`.
 - Electron uses the same HTTP service with context isolation, sandboxing and web security enabled.
 - `src/renderer/renderer.js`, `styles.css`, `src/main 2.js`, `scripti.sh`, and `get_link.py` are legacy implementations, not used by the current app. They retain old machine-specific paths and are not production entry points.
-- Existing user edits to `OptionWheel.jsx` are preserved; its external-value synchronization was already removed before this work, so wheel highlighting may differ after external next/previous or voice navigation.
-- Speech recognition depends on browser support; Electron falls back to typed search. Custom songs support title/artist search but do not fetch new lyrics.
+- Browser voice search uses Web Speech when available. The macOS Electron app uses Apple Speech through a native helper. Custom songs support title/artist search but do not fetch new lyrics.
+
+## Voice search on macOS desktop
+
+Restart with `npm start`. Its prestart step builds a small Swift helper using Apple Command Line Tools, caches the signed app in `~/Library/Caches/Aria/Voice`, and skips recompiling unchanged source. `npm run build:voice` builds it separately. No cloud API key or extra npm package is needed. Distribution to other Macs requires bundling/signing the helper for the target platform; this is the local development setup.
+
+Click **Voice Search**, allow **Speech Recognition** and **Microphone** when macOS asks, then say a library title or known lyric. If access was previously denied, enable Aria Voice (or the responsible Electron app shown by macOS) in **System Settings → Privacy & Security → Microphone / Speech Recognition**. The permission dialog is only requested after clicking Voice Search.
+
+Music pauses while listening so the microphone doesn't match the song already playing. A completed phrase selects a matching song; if no match is found or listening is cancelled, previous playback resumes. Click the pill again to cancel. Capture stops on completion, after the listening timeout, on reload, or when the window closes. Audio is not saved or sent to this project's backend or R2. The helper prefers on-device recognition where supported; Apple may process audio for other language configurations.
+
+The search dropdown offers English (India), English (US), and Hindi. Matching retains Unicode and understands commands like “play Night Changes.” Choose English for romanized titles; Hindi recognition yields Hindi-script text, so Hindi-script titles match directly (there is no automatic transliteration). Browsers without speech support and non-macOS desktop builds still provide typed search with an explicit explanation.
+
+`test/voice.test.js` verifies the native bridge, cancellation, permission feedback, stale-event suppression, browser fallback and title/lyric matching with simulated recognition. Live microphone accuracy requires testing on your device after granting permissions.
+
+## Playbar experiments
+
+The expanded player has a **Wave / Mixtape / Orbit** switcher. Mixtape is the initial style; your selection is saved on this device and carries across songs and restarts. All variants control the same audio element, so switching styles preserves playback position and volume. Wave keeps the original design, now with keyboard-accessible seeking. Mixtape adds animated cassette reels; Orbit adds a rotating record and circular progress. The new animations follow play/pause and respect reduced-motion preferences; they are decorative, not audio-reactive visualizers.
+
+For a side-by-side visual comparison, run `npm run dev` and open `/playbar-preview.html`. This development-only page simulates playback and makes no audio or cloud requests. The actual app uses the real player controls.
