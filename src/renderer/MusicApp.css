@@ -63,6 +63,7 @@ body, html, #root {
   position: absolute;
   top: 1.5rem;
   left: 1.5rem;
+  right: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -171,3 +172,439 @@ body, html, #root {
     transform: translateY(-100%);
   }
 }
+
+/* ── Brand Action Buttons (Shuffle + Add) ─────────────────────── */
+.brand-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: auto;
+}
+
+.brand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+}
+
+.brand-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* ── Add Music Modal ──────────────────────────────────────────── */
+.add-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: addModalIn 0.2s ease-out;
+}
+
+@keyframes addModalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.add-modal {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(16, 17, 23, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.add-modal__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.add-modal__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.9rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+  margin-bottom: 0.85rem;
+  transition: border-color 0.18s;
+}
+
+.add-modal__input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.add-modal__input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.add-modal__row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.add-modal__file-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.add-modal__file-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.add-modal__submit-btn {
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  background: #ffffff;
+  border: none;
+  color: #000000;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.add-modal__submit-btn:hover:not(:disabled) {
+  background: #e4e4e7;
+}
+
+.add-modal__submit-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Voice Listener Pill (Top-Right Floating Glassmorphism) ──────── */
+.voice-listener-container {
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.voice-listener-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  background: rgba(18, 19, 26, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 360px;
+}
+
+.voice-listener-pill:hover {
+  background: rgba(28, 30, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+}
+
+.voice-listener-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
+}
+
+.voice-mic-icon {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.75);
+  transition: color 0.2s;
+}
+
+.voice-listener-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  letter-spacing: 0.01em;
+}
+
+.voice-search-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  margin-left: 0.2rem;
+  color: rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.voice-search-toggle:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.voice-listener-pill.is-listening {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ffffff;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.28);
+}
+
+.voice-listener-pill.is-listening .voice-listener-pulse {
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: voicePulseRing 1.4s ease-in-out infinite;
+}
+
+.voice-listener-pill.is-listening .voice-mic-icon {
+  color: #ef4444;
+}
+
+@keyframes voicePulseRing {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+
+/* ── Voice Search Dropdown ────────────────────────────────────── */
+.voice-search-dropdown {
+  margin-top: 0.6rem;
+  width: 320px;
+  background: rgba(16, 17, 24, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 0.75rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: voiceDropdownIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes voiceDropdownIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.voice-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.voice-search-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  color: #ffffff;
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.voice-search-input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.voice-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.voice-search-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.voice-search-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.voice-search-hint {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 0.45rem;
+  padding: 0 0.2rem;
+  line-height: 1.3;
+}
+
+.voice-search-results {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.voice-search-result-item {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.voice-search-result-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.voice-result-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.voice-result-subtitle {
+  font-size: 0.72rem;
+  color: #38bdf8;
+  margin-top: 0.1rem;
+}
+
+.music-app--clean .voice-listener-container,
+.music-app--clean .voice-listener-pill {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .voice-listener-container {
+    top: 1rem;
+    right: 1rem;
+  }
+  .voice-listener-pill {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    max-width: 220px;
+  }
+  .voice-listener-text {
+    max-width: 120px;
+  }
+  .voice-search-dropdown {
+    width: 260px;
+  }
+}
+
+.add-modal { margin: 1rem; max-height: 90dvh; overflow-y: auto; }
+.add-modal__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.add-modal__heading .add-modal__title { margin: 0; }
+.add-modal__hint { color: #a1a1aa; font-size: .78rem; line-height: 1.6; margin: .8rem 0 1.2rem; }
+.add-modal label { display: block; font-size: .8rem; color: #d4d4d8; margin-bottom: .5rem; }
+.add-modal__track { display: flex; flex-direction: column; gap: .4rem; padding: 1rem; background: #ffffff09; border-radius: 10px; margin-bottom: 1rem; overflow-wrap: anywhere; }
+.add-modal__track span { color: #a1a1aa; font-size: .85rem; }
+.add-modal__status { color: #d4d4d8; font-size: .88rem; line-height: 1.5; margin-bottom: 1rem; }
+.add-modal progress { width: 100%; height: 6px; accent-color: #a5b4fc; margin-bottom: 1.2rem; }
+.add-modal__error { color: #fda4af; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.add-modal__badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; background: rgba(165, 180, 252, 0.15); color: #a5b4fc; border: 1px solid rgba(165, 180, 252, 0.3); margin-bottom: 0.45rem; }
+.add-modal__orig-label { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.add-modal__alias-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.25rem; }
+.add-modal__alias-tag { font-size: 0.72rem; color: #38bdf8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.add-modal__alias-edit-btn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #d4d4d8; border-radius: 6px; padding: 0.2rem 0.55rem; font-size: 0.72rem; font-weight: 500; cursor: pointer; transition: all 0.18s ease; }
+.add-modal__alias-edit-btn:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; border-color: rgba(255, 255, 255, 0.4); }
+.add-modal button:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
+.add-modal__row { flex-wrap: wrap; }
+.library-notice { position: absolute; top: 70px; left: 30px; right: 15px; z-index: 2; color: #a1a1aa; font-size: .7rem; }
+
+.music-app__panel-brand { z-index: 3; }
+.brand-btn--add { width: auto; min-height: 32px; padding: 0 .75rem; gap: .35rem; border-radius: 9px; font-size: .75rem; font-weight: 600; white-space: nowrap; color: #fff; background: rgba(165, 180, 252, .16); border-color: rgba(165, 180, 252, .35); }
+.brand-btn--add:hover { transform: none; background: rgba(165, 180, 252, .28); }
+.brand-btn--add-image { width: auto; min-height: 32px; padding: 0 .75rem; gap: .35rem; border-radius: 9px; font-size: .75rem; font-weight: 600; white-space: nowrap; color: #fff; background: rgba(56, 189, 248, .16); border-color: rgba(56, 189, 248, .35); }
+.brand-btn--add-image:hover { transform: none; background: rgba(56, 189, 248, .28); }
+.brand-btn--add-image:disabled { opacity: 0.6; cursor: not-allowed; }
+.brand-btn:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
+
+.upload-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 18, 22, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #f1f5f9;
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+  animation: toastFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .brand-actions { position: absolute; top: 36px; left: 0; margin-left: 0; }
+  .library-notice { top: 93px; left: 16px; }
+}
+
+.voice-language { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-top: .75rem; font-size: .75rem; color: #a1a1aa; }
+.voice-language select { color: #e4e4e7; background: #18181b; border: 1px solid #3f3f46; border-radius: 6px; padding: .3rem; }
+.voice-search-error { color: #fda4af; }

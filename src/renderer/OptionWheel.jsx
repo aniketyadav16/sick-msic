@@ -19,6 +19,7 @@ const DEFAULT_ITEMS = [
 const OptionWheel = ({
   items = DEFAULT_ITEMS,
   defaultSelected = 3,
+  value = undefined,
   onChange,
   textColor = '#a6a6a6',
   activeColor = '#ffffff',
@@ -256,6 +257,29 @@ const OptionWheel = ({
   useEffect(() => {
     applyTarget(targetRef.current, false);
   }, [items, fontSize, spacing, curve, tilt, blur, fade, minOpacity, side, loop, smoothing, applyTarget]);
+
+  // Synchronize target position when controlled value changes externally
+  useEffect(() => {
+    if (value === undefined || value === null) return;
+    const cfg = cfgRef.current;
+    if (!cfg.count) return;
+
+    const cur = targetRef.current;
+    const curIdx = ((Math.round(cur) % cfg.count) + cfg.count) % cfg.count;
+    if (curIdx === value && selectedRef.current === value) return;
+
+    let d = value - curIdx;
+    if (cfg.loop && cfg.count > 1) {
+      if (d > cfg.count / 2) d -= cfg.count;
+      else if (d < -cfg.count / 2) d += cfg.count;
+    }
+
+    const nextTarget = cur + d;
+    targetRef.current = nextTarget;
+    selectedRef.current = value;
+    setSelectedIndex(value);
+    startLoop();
+  }, [value, startLoop]);
 
   useEffect(
     () => () => {

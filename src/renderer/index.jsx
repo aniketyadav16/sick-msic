@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import './tailwind.css';
 import MusicApp from './MusicApp';
 
 const container = document.getElementById('root');

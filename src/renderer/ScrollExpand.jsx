@@ -92,6 +92,8 @@ const ScrollExpand = ({
       const inn = smoothstep(0.68, 1, p);
       overlayRef.current.style.opacity = `${inn}`;
       overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`;
+      overlayRef.current.style.pointerEvents = inn > 0.5 ? 'auto' : 'none';
+      overlayRef.current.inert = inn <= 0.5;
     }
   }, []);
 
@@ -204,7 +206,7 @@ const ScrollExpand = ({
     );
 
   const handleStageClick = (e) => {
-    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('canvas') || e.target.closest('.wavy-playbar')) {
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('canvas') || e.target.closest('.wavy-playbar, .playbar-studio')) {
       return;
     }
     const root = rootRef.current;

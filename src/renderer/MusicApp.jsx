@@ -3,9 +3,11 @@ import Aurora from './Aurora';
 import OptionWheel from './OptionWheel';
 import ScrollExpand from './ScrollExpand';
 import WavyPlaybar from './WavyPlaybar';
+import SongGallery from './SongGallery';
 import './MusicApp.css';
 import AddSongModal from './AddSongModal';
 import { musicApi } from './music-api';
+import { createVoiceSession, findMatchingTrack as matchTrack } from './voice-session.mjs';
 
 // Public Cloudflare R2 URL
 const BASE_R2_URL = (import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-74b555bb7c5040d49fc3ff86bc7905d1.r2.dev').replace(/\/$/, '');
@@ -23,7 +25,7 @@ const COSMOS_THEMES = [
   { image: `${BASE_R2_URL}/images/scenic-earth-sunrise.jpg`, colors: ['#f59e0b', '#d97706', '#1c0f00'] },
   { image: `${BASE_R2_URL}/images/space-deep-field.jpg`, colors: ['#60a5fa', '#a78bfa', '#090514'] },
   { image: `${BASE_R2_URL}/images/scenic-desert-galaxy.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
-  { image: `${BASE_R2_URL}/images/bmw-m5.jpg`, colors: ['#ec4₹899', '#f97316', '#140810'] },
+  { image: `${BASE_R2_URL}/images/bmw-m5.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
   { image: `${BASE_R2_URL}/images/Screenshot 2026-09-27 at 3.13.16 PM.png`, colors: ['#ec2899', '#f97376', '#140310'] },
   { image: `${BASE_R2_URL}/images/pexels-francesco-ungaro-12553116.jpg`, colors: ['#ec4899', '#f97316', '#140810'] },
   { image: `${BASE_R2_URL}/images/wp2605667-wallpaper-optimus-prime.jpg`, colors: ['#ec4899', '#f97316', '#140810'] }
@@ -248,6 +250,16 @@ export default function MusicApp() {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [cleanMode, setCleanMode] = useState(false);
+  const [libraryView, setLibraryView] = useState(() => {
+    try { return localStorage.getItem('aria.library.view.v1') === 'gallery' ? 'gallery' : 'wheel'; }
+    catch { return 'wheel'; }
+  });
+
+  const changeLibraryView = (view) => {
+    setLibraryView(view);
+    setCleanMode(false);
+    try { localStorage.setItem('aria.library.view.v1', view); } catch {}
+  };
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [libraryError, setLibraryError] = useState('');
@@ -256,178 +268,80 @@ export default function MusicApp() {
   const fileInputRef = useRef(null);
   const imageFileInputRef = useRef(null);
 
-  // Web Speech API continuous listening state
-  const [isListening, setIsListening] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('idle');
+  const isListening = voiceStatus === 'listening';
   const [transcript, setTranscript] = useState('');
-  const [speechError, setSpeechError] = useState(null);
+  const [speechError, setSpeechError] = useState('');
+  const [voiceHint, setVoiceHint] = useState('');
+  const [voiceLanguage, setVoiceLanguage] = useState('en-IN');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const isListeningRef = useRef(false);
-  const lastMatchTimeRef = useRef(0);
+  const voiceRef = useRef(null);
+  const resumeAfterVoiceRef = useRef(false);
+  const voiceCallbacksRef = useRef({});
 
-  useEffect(() => {
-    isListeningRef.current = isListening;
-  }, [isListening]);
-
-  // Clean string helper for match comparison
-  const normalize = (str) =>
-    str ? str.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim() : '';
-
-  // Match text against track titles, artists, or lyrics
-  const findMatchingTrack = useCallback((spokenText) => {
-    const text = normalize(spokenText);
-    if (!text || text.length < 2) return null;
-
-    for (let i = 0; i < tracks.length; i++) {
-      const track = tracks[i];
-      const titleNorm = normalize(track.title);
-      const artistNorm = normalize(track.artist);
-
-      // 1. Title match
-      if (titleNorm && (text.includes(titleNorm) || (titleNorm.length > 3 && titleNorm.includes(text)))) {
-        return { index: i, matchType: 'title', matchText: track.title };
-      }
-
-      // 2. Lyrics match
-      if (Array.isArray(track.lyrics)) {
-        for (const lyric of track.lyrics) {
-          const lyricNorm = normalize(lyric);
-          if (lyricNorm && (text.includes(lyricNorm) || (lyricNorm.length > 4 && lyricNorm.includes(text)))) {
-            return { index: i, matchType: 'lyric', matchText: lyric };
-          }
-        }
-      }
-
-      // 3. Artist match
-      if (artistNorm && text.includes(artistNorm)) {
-        return { index: i, matchType: 'artist', matchText: track.artist };
-      }
-    }
-    return null;
-  }, [tracks]);
-
+  const findMatchingTrack = useCallback((text) => matchTrack(tracks, text), [tracks]);
   const playMatchedTrack = useCallback((idx) => {
-    if (idx >= 0 && idx < tracks.length) {
-      setCurrentIndex(idx);
-      setIsPlaying(true);
-      isPlayingRef.current = true;
-      if (audioRef.current) {
-        audioRef.current.play().catch(() => {});
-      }
-    }
-  }, [tracks.length]);
+    if (idx < 0 || idx >= tracks.length) return;
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+    setCurrentIndex(idx);
+    // The track-switch effect loads the new URL; don't play the previous song.
+    if (idx === currentIndex) audioRef.current?.play().catch(() => setIsPlaying(false));
+  }, [tracks.length, currentIndex]);
 
-  // Handle Speech Recognition lifecycle
-  useEffect(() => {
-    const SpeechRecognition = typeof window !== 'undefined' &&
-      (window.SpeechRecognition || window.webkitSpeechRecognition);
-
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-
-      const spoken = (interimTranscript || finalTranscript).trim();
-      if (spoken) {
-        setTranscript(spoken);
-
-        const match = findMatchingTrack(spoken);
-        const now = Date.now();
-        if (match && (now - lastMatchTimeRef.current > 1500 || match.index !== currentIndex)) {
-          lastMatchTimeRef.current = now;
-          playMatchedTrack(match.index);
-        }
-      }
-    };
-
-    recognition.onerror = (event) => {
-      // In Electron desktop, Chromium lacks Google's proprietary Speech API key
-      // and returns 'network' / 'not-allowed'. Stop the loop and open lyric search.
-      if (event.error === 'network' || event.error === 'service-not-allowed' || event.error === 'not-allowed') {
-        isListeningRef.current = false;
-        setIsListening(false);
-        setSpeechError('network');
-        setIsSearchOpen(true);
-        setTimeout(() => searchInputRef.current?.focus(), 150);
-      } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
-        console.warn('Speech recognition notice:', event.error);
-      }
-    };
-
-    recognition.onend = () => {
-      // Only keep continuous listening if user hasn't toggled off and no network error occurred
-      if (isListeningRef.current && !speechError) {
-        try {
-          recognition.start();
-        } catch {
-          // ignore if already running
-        }
+  voiceCallbacksRef.current = {
+    result(event) {
+      setTranscript(event.text);
+      setSearchQuery(event.text);
+      if (!event.final) return;
+      const match = findMatchingTrack(event.text);
+      if (match) {
+        resumeAfterVoiceRef.current = false;
+        playMatchedTrack(match.index);
+        setVoiceHint(`Playing ${tracks[match.index].title}`);
       } else {
-        setIsListening(false);
+        setVoiceHint(`No library match for “${event.text}”. Try the song title or a lyric.`);
       }
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      try {
-        recognition.stop();
-      } catch {}
-    };
-  }, [findMatchingTrack, currentIndex, playMatchedTrack, speechError]);
-
-  const toggleListening = useCallback(() => {
-    const SpeechRecognition = typeof window !== 'undefined' &&
-      (window.SpeechRecognition || window.webkitSpeechRecognition);
-
-    if (!SpeechRecognition) {
-      setIsSearchOpen(true);
-      setTimeout(() => searchInputRef.current?.focus(), 150);
-      return;
-    }
-
-    if (isListening) {
-      isListeningRef.current = false;
-      setIsListening(false);
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
+    },
+    end() {
+      setVoiceStatus('idle');
+      if (resumeAfterVoiceRef.current) {
+        resumeAfterVoiceRef.current = false;
+        isPlayingRef.current = true;
+        audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       }
-      setTranscript('');
-    } else {
-      isListeningRef.current = true;
-      setIsListening(true);
-      setTranscript('');
-      setSpeechError(null);
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch (err) {
-          console.warn('Recognition start error:', err);
-          setIsListening(false);
-          isListeningRef.current = false;
-          setIsSearchOpen(true);
-        }
-      }
-    }
-  }, [isListening]);
+    },
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const session = createVoiceSession({
+      native: window.musicApp?.startVoice ? window.musicApp : null,
+      Recognition: window.SpeechRecognition || window.webkitSpeechRecognition,
+      onEvent(event) {
+        if (!mounted) return;
+        if (event.type === 'starting') setVoiceStatus('starting');
+        if (event.type === 'listening') { setVoiceStatus('listening'); setVoiceHint('Say a song title or lyric.'); }
+        if (event.type === 'status') setVoiceHint('Allow Microphone and Speech Recognition when macOS asks.');
+        if (event.type === 'result') voiceCallbacksRef.current.result(event);
+        if (event.type === 'error') { setSpeechError(event.message); setVoiceHint(''); setIsSearchOpen(true); }
+        if (event.type === 'end') voiceCallbacksRef.current.end();
+      },
+    });
+    voiceRef.current = session;
+    return () => { mounted = false; session.dispose(); voiceRef.current = null; };
+  }, []);
+
+  const toggleListening = () => {
+    if (voiceStatus !== 'idle') { voiceRef.current?.stop(); return; }
+    setSpeechError(''); setTranscript(''); setVoiceHint('Starting microphone…'); setIsSearchOpen(true);
+    resumeAfterVoiceRef.current = Boolean(audioRef.current && !audioRef.current.paused);
+    audioRef.current?.pause();
+    isPlayingRef.current = false; setIsPlaying(false);
+    voiceRef.current?.start(voiceLanguage);
+  };
 
   // Load cloud images from R2 on mount
   useEffect(() => {
@@ -523,7 +437,7 @@ export default function MusicApp() {
 
     const handleTouchStart = (e) => {
       // Don't intercept taps inside buttons, inputs, or interactive controls
-      if (e.target.closest('button, input, form, .wavy-playbar, .option-wheel')) {
+      if (e.target.closest('button, input, form, .wavy-playbar, .playbar-studio, .option-wheel, .infinite-menu')) {
         return;
       }
 
@@ -598,6 +512,7 @@ export default function MusicApp() {
       const ids = new Set(previous.map((track) => track.id));
       const keys = new Set(previous.map((track) => track.key).filter(Boolean));
       const additions = incoming.filter((track) => !ids.has(track.id) && !urls.has(track.url) && !keys.has(track.key));
+      if (!additions.length) return previous;
       return [...previous, ...additions.map((track, index) => ({
         ...track,
         image: themes[(previous.length + index) % themes.length].image,
@@ -634,6 +549,10 @@ export default function MusicApp() {
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
 
   const currentTrack = tracks[currentIndex] || tracks[0];
   const currentTheme = themes[imageIndex % themes.length] || themes[0];
@@ -751,7 +670,7 @@ export default function MusicApp() {
   };
 
   return (
-    <main className={`music-app${cleanMode ? ' music-app--clean' : ''}`}>
+    <main className={`music-app music-app--${libraryView}${cleanMode ? ' music-app--clean' : ''}`}>
       {/* Hidden HTML5 Audio Player */}
       <audio
         ref={audioRef}
@@ -760,13 +679,25 @@ export default function MusicApp() {
         onEnded={handleEnded}
       />
 
+      <div className="library-view-switch" role="group" aria-label="Library view">
+        <button type="button" aria-pressed={libraryView === 'wheel'} onClick={() => changeLibraryView('wheel')}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M7 5h10M4 12h16M7 19h10" /></svg>
+          Wheel
+        </button>
+        <button type="button" aria-pressed={libraryView === 'gallery'} onClick={() => changeLibraryView('gallery')}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></svg>
+          Gallery
+        </button>
+      </div>
+
       {/* Floating Voice Listener Pill (top-right, hidden in cleanMode) */}
       {!cleanMode && (
         <div className={`voice-listener-container ${isSearchOpen ? 'is-expanded' : ''}`}>
           <button
             className={`voice-listener-pill ${isListening ? 'is-listening' : ''}`}
             onClick={toggleListening}
-            title={isListening ? "Listening for lyrics or song names... click to stop" : "Start Voice & Lyric Search"}
+            aria-pressed={voiceStatus !== 'idle'}
+            title={voiceStatus !== 'idle' ? "Stop voice search" : "Start Voice & Lyric Search"}
             type="button"
           >
             <span className="voice-listener-pulse" />
@@ -777,8 +708,8 @@ export default function MusicApp() {
               <line x1="8" y1="23" x2="16" y2="23"/>
             </svg>
             <span className="voice-listener-text">
-              {isListening
-                ? (transcript ? `"${transcript}"` : "Listening lyrics...")
+              {voiceStatus === 'starting' ? "Starting… click to cancel" : isListening
+                ? (transcript ? `"${transcript}"` : "Listening…")
                 : (transcript ? `"${transcript}"` : "Voice Search")}
             </span>
             <span
@@ -836,11 +767,16 @@ export default function MusicApp() {
                   ✕
                 </button>
               </div>
-              {speechError === 'network' && (
-                <div className="voice-search-hint">
-                  <span>Electron speech service offline. Type lyrics or use macOS dictation (Fn Fn).</span>
-                </div>
-              )}
+              <label className="voice-language">Speech language
+                <select aria-label="Speech language" value={voiceLanguage} disabled={voiceStatus !== 'idle'} onChange={(e) => setVoiceLanguage(e.target.value)}>
+                  <option value="en-IN">English (India)</option>
+                  <option value="en-US">English (US)</option>
+                  <option value="hi-IN">Hindi</option>
+                </select>
+              </label>
+              {speechError && <div className="voice-search-hint voice-search-error" role="alert">{speechError}</div>}
+              {voiceHint && <div className="voice-search-hint" role="status">{voiceHint}</div>}
+              <div className="voice-search-hint">{window.musicApp?.startVoice ? 'Uses macOS speech recognition. Apple may process audio when local recognition is unavailable.' : 'Your browser provides speech recognition. It may use an online speech service.'}</div>
               {searchQuery && (
                 <div className="voice-search-results">
                   {tracks
@@ -884,7 +820,26 @@ export default function MusicApp() {
       </div>
 
       {/* Main Grid Viewport */}
-      <div className="music-app__content">
+      {libraryView === 'gallery' ? (
+        <SongGallery
+          tracks={tracks}
+          currentIndex={currentIndex}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration || currentTrack.duration}
+          volume={volume}
+          cleanMode={cleanMode}
+          libraryError={libraryError}
+          onSelect={playMatchedTrack}
+          onPlayPause={togglePlay}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onSeek={handleSeek}
+          onVolumeChange={handleVolumeChange}
+          onAddSong={() => setShowAddModal(true)}
+          onShuffleImages={handleShuffleImages}
+        />
+      ) : <div className="music-app__content">
         {/* Wheel Panel */}
         <section className="music-app__wheel-panel">
           <div className="music-app__panel-brand">
@@ -996,7 +951,7 @@ export default function MusicApp() {
             )}
           </ScrollExpand>
         </section>
-      </div>
+      </div>}
 
       {/* Hidden file input for local files */}
       <input
